@@ -9,4 +9,6 @@ or for Arduino Nano:
 ```
 avrdude -p atmega328p -c arduino -P /dev/ttyUSB0 -b 57600 -D -U flash:w:main.hex:i
 ```
+
+Use `make program` to program using an ISP (here USBasp).
 **Attention!** After flashing a custom firmware, an external ISP could become necessary to burn the Arduino firmware.
