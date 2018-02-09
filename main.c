@@ -1,5 +1,5 @@
-#include "global.h"
-#include "uart.h"
+#include "include/global.h"
+#include "include/uart.h"
 
 #include <avr/io.h>
 #include <util/delay.h>

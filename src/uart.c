@@ -1,4 +1,4 @@
-#include "uart.h"
+#include "../include/uart.h"
 #include <inttypes.h>
 #include <avr/io.h>
 #include <stdlib.h>
@@ -52,4 +52,3 @@ void UART_puth(int16_t d)
 	itoa(d, s, 16);
 	UART_puts(s);
 }
-
