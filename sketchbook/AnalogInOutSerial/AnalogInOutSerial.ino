@@ -11,25 +11,33 @@ int sensorValue1 = 0;
 int sensorValue2 = 0; 
 int outputValue = 0;
 
-int i = 0;
+unsigned long int i = 0;
+
+unsigned long start_us = 0;
+unsigned long end_us = 0;
+unsigned long used_us = 0;
 
 void setup() {
   //Serial.begin(38400); 
-  Serial.begin(500000); 
+  Serial.begin(500000);
+  // Create a reference signal
+  // According to Arduino documentation, the frequency is about 490 Hz
+  analogWrite(analogOutPin, 127);
 }
 
 void loop() {
-  delayMicroseconds(SAMPLE_TIME_US-CONV_TIME_US*2-480);
-  sensorValue1 = analogRead(analogInPin1);
-  sensorValue2 = analogRead(analogInPin2);
-  // map it to the range of the analog out:
-  outputValue = map(sensorValue1, 0, 400, 0, 255);  
-
-  //analogWrite(analogOutPin, outputValue);         
-
-  // print the results to the serial monitor:
-  Serial.print(sensorValue1);
+  start_us = micros();
+  Serial.print(used_us);
   Serial.print("\t");
-  Serial.println(sensorValue2);   
-  //  delay(1);
+  Serial.print(analogRead(analogInPin1));
+  Serial.print("\t");
+  Serial.print(analogRead(analogInPin2));
+  Serial.println();
+  
+  // Measure time
+  end_us = micros();
+  used_us = end_us - start_us;
+  
+  // Idle
+  while( (micros()-start_us) < SAMPLE_TIME_US );
 }
