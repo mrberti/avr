@@ -9,6 +9,8 @@
 *.o
 *.sym
 *.d
+*.h.gch
 bin/
-datasheets/
 obj/
+build/
+datasheets/

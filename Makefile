@@ -5,8 +5,6 @@ AVRDUDE_PORT = usb
 
 SRCDIR = src
 INCDIR = include
-
-BUILDDIR = build
 OBJDIR = obj
 BINDIR = bin
 DEPDIR = $(OBJDIR)
@@ -25,11 +23,16 @@ CFLAGS += -O2
 CFLAGS += -Wall -Wstrict-prototypes
 CFLAGS += -std=gnu99
 
-LDFLAGS =
+# The next two options will prevent unused functions to be linked
+CFLAGS += -fdata-sections -ffunction-sections
+LDFLAGS = -Wl,--gc-sections
 
+# If you do not want the device to be erase, uncomment the next line
+#AVRDUDE_OPTIONS += -D
 AVRDUDE_OPTIONS = -p $(MCU)
 AVRDUDE_OPTIONS += -c $(AVRDUDE_DEVICE) -P $(AVRDUDE_PORT)
-#AVRDUDE_OPTIONS += -D
+
+.PHONY : all start depends objects hex lss target program clean cleaner
 
 all: start depends target lss hex
 
@@ -48,59 +51,56 @@ hex: $(BINDIR)/$(TARGET).hex
 
 lss: $(OBJS:.o=.lss)
 
-# Crete binary
+# Link: Will create the target binary
 $(BINDIR)/$(TARGET).elf: $(OBJS)
 	@echo ""
 	@echo "Linking target $@: $^"
 	@mkdir -p $(BINDIR)
 	avr-gcc $(CFLAGS) $(LDFLAGS) -o $@ $^
+	avr-objdump -S $@ > $(BINDIR)/$(TARGET).lss
 
-# Create binary file for download
-$(BINDIR)/%.hex: $(BINDIR)/%.elf
+# HEX: Create binary file to download
+$(BINDIR)/$(TARGET).hex: $(BINDIR)/$(TARGET).elf
 	@echo ""
-	@echo "Creating .hex file: $@ => $^"
+	@echo "Creating .hex file: $@ => $<"
 	mkdir -p $(BINDIR)
 	avr-objcopy -R .eeprom -R .fuse -R .lock -R .signature -O ihex $< $@
 	@echo ""
 	avr-size $<
 
-# Create objects
+# Compile: will create objects
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	@echo ""
 	@echo "Compiling: $< => $@"
 	@mkdir -p $(OBJDIR)
 	avr-gcc $(CFLAGS) $(INCFLAGS) -c $< -o $@
 
-# Create dependendies
+# Depends: Create dependendies
 $(OBJDIR)/%.d: $(SRCDIR)/%.c
 	@echo ""
-	@echo "Creating depend files: $< => $@"
+	@echo "Creating depend file: $< => $@"
 	@mkdir -p $(OBJDIR)
 	avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^|$@ |' -e 's| | $(OBJDIR)/|' > $@
 
-# Create assmebler listings
+# LSS: Create assembler listings for all objects
 $(OBJDIR)/%.lss: $(OBJDIR)/%.o
 	@echo ""
-	@echo "Creating listing for $@: $<"
+	@echo "Creating listing file: $@ => $<"
 	avr-objdump -S $< > $@
 
 program: $(BINDIR)/$(TARGET).hex
 	avrdude $(AVRDUDE_OPTIONS) -U flash:w:$(BINDIR)/$(TARGET).hex:i
 
+include $(DEPS)
+
 clean:
 	@echo ""
 	@echo "Removing build artifacts..."
 	-rm -rf $(BINDIR)/*
-	-rm -rf $(BUILDDIR)/*
 	-rm -rf $(OBJDIR)/*
 
 cleaner:
 	@echo ""
 	@echo "Removing directories..."
 	-rm -rf $(BINDIR)
-	-rm -rf $(BUILDDIR)
 	-rm -rf $(OBJDIR)
-
-.PHONY : all start depends program clean cleaner
-
--include $(DEPS)
