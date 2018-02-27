@@ -66,6 +66,7 @@ $(BINDIR)/$(TARGET).elf: $(OBJS)
 	@mkdir -p $(BINDIR)
 	avr-gcc $(CFLAGS) $(LDFLAGS) -o $@ $^
 	avr-objdump -S $@ > $(BINDIR)/$(TARGET).lss
+	avr-size $@
 
 # hex: Create binary file to download
 $(BINDIR)/$(TARGET).hex: $(BINDIR)/$(TARGET).elf
@@ -74,7 +75,6 @@ $(BINDIR)/$(TARGET).hex: $(BINDIR)/$(TARGET).elf
 	mkdir -p $(BINDIR)
 	avr-objcopy -R .eeprom -R .fuse -R .lock -R .signature -O ihex $< $@
 	@echo ""
-	avr-size $<
 
 # objects: will create objects
 $(OBJDIR)/%.o: $(SRCDIR)/%.c

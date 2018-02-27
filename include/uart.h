@@ -11,11 +11,11 @@
 
 /**
  * Macros for calculating the UBBR values.
- * Use clever rounding
+ * Use clever rounding to minimize the baud rate error
  */
 #define UART_UBRR_CALC(baud)       ((F_CPU+baud*8)/(baud*16)-1)
 #define UART_BAUD_REAL_CALC(ubrr)  (F_CPU/(16*(ubrr+1)))
-#define BAUD_ERROR_CALC(x)    ((BAUD_REAL_CALC(x)*1000)/UART_UBRR_CALC(x))
+#define BAUD_ERROR_CALC(x)         ((UART_BAUD_REAL_CALC(x)*1000)/UART_UBRR_CALC(x))
 
 /* Standard baud rates */
 #define UART_UBRR_9k6   (UART_UBRR_CALC(9600UL))
@@ -68,17 +68,17 @@ void UART_enable(void);
 
 /**
  * \brief Output a single character on the UART
- * \param unsigned char c: The character to be sent
+ * \param char c: The character to be sent
  * \returns No return value
  */
-void UART_putc(unsigned char c);
+void UART_putc(char c);
 
 /**
  * \brief Output a string on the UART
- * \param unsigned char *s: pointer to string to be sent
+ * \param char *s: pointer to string to be sent
  * \returns No return value
  */
-void UART_puts(unsigned char *s);
+void UART_puts(char *s);
 
 /**
  * \brief Output a formatted 16 bit integer on the UART

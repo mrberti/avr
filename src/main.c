@@ -6,9 +6,8 @@
 
 int main(void)
 {
-
-	//UART_main_test();
-
+	UART_main_test();
+	
 	DDRB = (1<<PB5);
 	DDRD = (1<<PD3);
 	while(1)

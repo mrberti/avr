@@ -24,14 +24,14 @@ void UART_enable(void)
 	UCSR0B |= (1<<TXEN0);
 }
 
-void UART_putc(unsigned char c)
+void UART_putc(char c)
 {
 	/* Blocking wait for the UART to be ready*/
 	while(!(UCSR0A & (1<<UDRE0)));
 	UDR0 = c;
 }
 
-void UART_puts(unsigned char *s)
+void UART_puts(char *s)
 {
 	while(*s)
 	{
@@ -98,9 +98,4 @@ void UART_main_test()
 	UART_init(UART_UBRR_500k);
 	UART_enable();
 	UART_print_ubrr_vals();
-	while(1)
-	{
-
-	}
-	return;
 }
