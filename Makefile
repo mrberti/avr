@@ -1,25 +1,26 @@
 TARGET = main
 MCU = atmega328p
+AVRDUDE_DEVICE = usbasp
+AVRDUDE_PORT = usb
+
+SRCDIR = src
+INCDIR = include
 
 BUILDDIR = build
 OBJDIR = obj
-SRCDIR = src
-INCDIR = include
-TARGETDIR = bin
+BINDIR = bin
+DEPDIR = $(OBJDIR)
 
-SRCS = $(shell find src -type f -name "*.c")
-OBJS = $(patsubst $(SRCDIR)/%,$(OBJDIR)/%,$(SRCS:.c=.o))
-OBJS += $(OBJDIR)/$(TARGET).o
-#SRCS += $(TARGET).c
+SRCS = $(wildcard $(SRCDIR)/*.c)
+OBJS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
+DEPS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.d,$(SRCS))
 
-DEPFILE = $(BUILDDIR)/dep.d
-#DEP_FLAGS = -MD -MP # -MF $(DEPFILE)
-DEP_FLAGS = -MM
+#DEP_FLAGS = -MD -MP
+DEPFLAGS = -MM
+
+INCFLAGS = -I./$(INCDIR)
 
 CFLAGS = -mmcu=$(MCU)
-CFLAGS += -I.
-#CFLAGS += -I./src
-CFLAGS += -I./include
 CFLAGS += -O2
 CFLAGS += -Wall -Wstrict-prototypes
 CFLAGS += -std=gnu99
@@ -27,63 +28,79 @@ CFLAGS += -std=gnu99
 LDFLAGS =
 
 AVRDUDE_OPTIONS = -p $(MCU)
-AVRDUDE_OPTIONS += -c usbasp -P usb
+AVRDUDE_OPTIONS += -c $(AVRDUDE_DEVICE) -P $(AVRDUDE_PORT)
 #AVRDUDE_OPTIONS += -D
 
-all: start target hex
+all: start depends target lss hex
 
 start:
 	@echo "Starting build process..."
 	@echo "Using sources: $(SRCS)"
 	@echo "Using objects: $(OBJS)"
 
-#depends:
-#	@echo ""
-#	@echo "Creating dependency file for $(TARGET).c: $(DEPFILE)"
-#	mkdir -p $(BUILDDIR)
-#	avr-gcc $(CFLAGS) $(DEP_FLAGS) $(SRCS) $(TARGET).c > $(DEPFILE)
+depends: $(DEPS)
 
-target: $(TARGET).elf
+objects: $(OBJS)
 
-hex: $(TARGET).hex
+target: $(BINDIR)/$(TARGET).elf
 
-$(TARGET).elf: $(OBJS)
+hex: $(BINDIR)/$(TARGET).hex
+
+lss: $(OBJS:.o=.lss)
+
+# Crete binary
+$(BINDIR)/$(TARGET).elf: $(OBJS)
 	@echo ""
 	@echo "Linking target $@: $^"
-	@mkdir -p $(TARGETDIR)
-	avr-gcc $(CFLAGS) $(LDFLAGS) -o $(TARGETDIR)/$@ $^
+	@mkdir -p $(BINDIR)
+	avr-gcc $(CFLAGS) $(LDFLAGS) -o $@ $^
 
-# Explicit rule for target
-$(OBJDIR)/$(TARGET).o: $(TARGET).c
+# Create binary file for download
+$(BINDIR)/%.hex: $(BINDIR)/%.elf
+	@echo ""
+	@echo "Creating .hex file: $@ => $^"
+	mkdir -p $(BINDIR)
+	avr-objcopy -R .eeprom -R .fuse -R .lock -R .signature -O ihex $< $@
+	@echo ""
+	avr-size $<
+
+# Create objects
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
 	@echo ""
 	@echo "Compiling: $< => $@"
 	@mkdir -p $(OBJDIR)
-	avr-gcc -c $(CFLAGS) -o $@ $<
+	avr-gcc $(CFLAGS) $(INCFLAGS) -c $< -o $@
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.c $(INCDIR)/%.h
+# Create dependendies
+$(OBJDIR)/%.d: $(SRCDIR)/%.c
 	@echo ""
-	@echo "Compiling: $< => $@"
+	@echo "Creating depend files: $< => $@"
 	@mkdir -p $(OBJDIR)
-	avr-gcc -c $(CFLAGS) -o $@ $<
+	avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^|$@ |' -e 's| | $(OBJDIR)/|' > $@
 
-%.hex: %.elf
+# Create assmebler listings
+$(OBJDIR)/%.lss: $(OBJDIR)/%.o
 	@echo ""
-	@echo "Creating .hex file $@: $^"
-	mkdir -p $(TARGETDIR)
-	avr-objcopy -R .eeprom -R .fuse -R .lock -R .signature -O ihex \
-$(TARGETDIR)/$< $(TARGETDIR)/$@
+	@echo "Creating listing for $@: $<"
+	avr-objdump -S $< > $@
 
-program: $(TARGETDIR)/$(TARGET).hex
-	avrdude $(AVRDUDE_OPTIONS) -U flash:w:$(TARGETDIR)/$(TARGET).hex:i
+program: $(BINDIR)/$(TARGET).hex
+	avrdude $(AVRDUDE_OPTIONS) -U flash:w:$(BINDIR)/$(TARGET).hex:i
 
 clean:
 	@echo ""
-	@echo "Clean up..."
-	-rm -rf $(OBJS) $(DEPFILE) *.out *.elf *.hex
-	-rm -rf $(TARGETDIR)
+	@echo "Removing build artifacts..."
+	-rm -rf $(BINDIR)/*
+	-rm -rf $(BUILDDIR)/*
+	-rm -rf $(OBJDIR)/*
+
+cleaner:
+	@echo ""
+	@echo "Removing directories..."
+	-rm -rf $(BINDIR)
 	-rm -rf $(BUILDDIR)
 	-rm -rf $(OBJDIR)
 
-cleaner: clean
-
 .PHONY : all start depends program clean cleaner
+
+-include $(DEPS)

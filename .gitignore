@@ -8,6 +8,7 @@
 *.map
 *.o
 *.sym
+*.d
 bin/
 datasheets/
 obj/
