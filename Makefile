@@ -1,3 +1,12 @@
+## A simple make file for avr-gcc
+#
+# Known problems:
+#  - When running 'make clean' two times, the dependency files will be generated
+#    but deleted directly. This is because on including they do not exist and
+#    thus, make generates them.
+#
+# Author: Simon Bertling, 2018
+
 TARGET = main
 MCU = atmega328p
 AVRDUDE_DEVICE = usbasp
@@ -13,7 +22,6 @@ SRCS = $(wildcard $(SRCDIR)/*.c)
 OBJS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
 DEPS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.d,$(SRCS))
 
-#DEP_FLAGS = -MD -MP
 DEPFLAGS = -MM
 
 INCFLAGS = -I./$(INCDIR)
@@ -51,7 +59,7 @@ hex: $(BINDIR)/$(TARGET).hex
 
 lss: $(OBJS:.o=.lss)
 
-# Link: Will create the target binary
+# target: Create the target binary
 $(BINDIR)/$(TARGET).elf: $(OBJS)
 	@echo ""
 	@echo "Linking target $@: $^"
@@ -59,7 +67,7 @@ $(BINDIR)/$(TARGET).elf: $(OBJS)
 	avr-gcc $(CFLAGS) $(LDFLAGS) -o $@ $^
 	avr-objdump -S $@ > $(BINDIR)/$(TARGET).lss
 
-# HEX: Create binary file to download
+# hex: Create binary file to download
 $(BINDIR)/$(TARGET).hex: $(BINDIR)/$(TARGET).elf
 	@echo ""
 	@echo "Creating .hex file: $@ => $<"
@@ -68,39 +76,42 @@ $(BINDIR)/$(TARGET).hex: $(BINDIR)/$(TARGET).elf
 	@echo ""
 	avr-size $<
 
-# Compile: will create objects
+# objects: will create objects
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	@echo ""
 	@echo "Compiling: $< => $@"
 	@mkdir -p $(OBJDIR)
 	avr-gcc $(CFLAGS) $(INCFLAGS) -c $< -o $@
 
-# Depends: Create dependendies
+# depends: Create dependendies
 $(OBJDIR)/%.d: $(SRCDIR)/%.c
 	@echo ""
 	@echo "Creating depend file: $< => $@"
 	@mkdir -p $(OBJDIR)
 	avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^|$@ |' -e 's| | $(OBJDIR)/|' > $@
 
-# LSS: Create assembler listings for all objects
+# lss: Create assembler listings for all objects
 $(OBJDIR)/%.lss: $(OBJDIR)/%.o
 	@echo ""
 	@echo "Creating listing file: $@ => $<"
 	avr-objdump -S $< > $@
 
+# Download the program to the device
 program: $(BINDIR)/$(TARGET).hex
 	avrdude $(AVRDUDE_OPTIONS) -U flash:w:$(BINDIR)/$(TARGET).hex:i
-
-include $(DEPS)
 
 clean:
 	@echo ""
 	@echo "Removing build artifacts..."
 	-rm -rf $(BINDIR)/*
 	-rm -rf $(OBJDIR)/*
+	-rm -rf $(INCDIR)/*.h.gch
 
 cleaner:
 	@echo ""
 	@echo "Removing directories..."
 	-rm -rf $(BINDIR)
 	-rm -rf $(OBJDIR)
+	-rm -rf $(INCDIR)/*.h.gch
+
+-include $(DEPS)
