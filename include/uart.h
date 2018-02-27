@@ -6,7 +6,6 @@
  * 		  Tested on AVR atmega328p32 (arduino)
  * \author	Simon Bertling
  */
-
 #include "global.h"
 #include <inttypes.h>
 
@@ -47,44 +46,44 @@
 #define UART_BAUD_REAL_1000k (UART_BAUD_REAL_CALC(UART_UBRR_1000k))
 
 /**
- * \brief Initialisiert den UART
- * \param Keine Parameter
- * \returns Kein R�ckgabewert
+ * \brief Initialize the UART
+ * \param ubrr: The 16 bit value for the UBRR register
+ * \returns No return value
  */
 void UART_init(uint16_t ubrr);
 
 /**
- * \brief Deaktiviert den UART
- * \param Keine Parameter
- * \returns Kein R�ckgabewert
+ * \brief Deactivate the UART
+ * \param No parameters
+ * \returns No return value
  */
 void UART_disable(void);
 
 /**
  * \brief Aktiviert den UART
- * \param Keine Parameter
- * \returns Kein R�ckgabewert
+ * \param No parameters
+ * \returns No return value
  */
 void UART_enable(void);
 
 /**
- * \brief Gibt ein Zeichen auf dem UART aus
- * \param unsigned char c: Das zu sendende Zeichen
- * \returns Kein R�ckgabewert
+ * \brief Output a single character on the UART
+ * \param unsigned char c: The character to be sent
+ * \returns No return value
  */
-void UART_putc(char c);
+void UART_putc(unsigned char c);
 
 /**
- * \brief Gibt einen String auf dem UART aus
- * \param unsigned char *s: Pointer auf zu sendenden String
- * \returns Kein R�ckgabewert
+ * \brief Output a string on the UART
+ * \param unsigned char *s: pointer to string to be sent
+ * \returns No return value
  */
-void UART_puts(char *s);
+void UART_puts(unsigned char *s);
 
 /**
- * \brief Gibt einen 16 bit vorzeichenbehafteten Integerwert auf dem UART aus
- * \param uint16_t d: Wert der zu sendenden Zahl
- * \returns Kein R�ckgabewert
+ * \brief Output a formatted 16 bit integer on the UART
+ * \param uint16_t d: Value to be sent
+ * \returns No return value
  */
 void UART_putd(int16_t d);
 

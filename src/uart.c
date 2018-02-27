@@ -1,4 +1,5 @@
-#include "../include/uart.h"
+#include "uart.h"
+
 #include <inttypes.h>
 #include <avr/io.h>
 #include <stdlib.h>
@@ -23,14 +24,14 @@ void UART_enable(void)
 	UCSR0B |= (1<<TXEN0);
 }
 
-void UART_putc(char c)
+void UART_putc(unsigned char c)
 {
-	// Warte auf Sendebereitschaft
+	/* Blocking wait for the UART to be ready*/
 	while(!(UCSR0A & (1<<UDRE0)));
 	UDR0 = c;
 }
 
-void UART_puts(char *s)
+void UART_puts(unsigned char *s)
 {
 	while(*s)
 	{
@@ -99,7 +100,7 @@ void UART_main_test()
 	UART_print_ubrr_vals();
 	while(1)
 	{
-		
+
 	}
 	return;
 }
