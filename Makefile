@@ -114,4 +114,7 @@ cleaner:
 	-rm -rf $(OBJDIR)
 	-rm -rf $(INCDIR)/*.h.gch
 
+# If the dependency files do not exist, make will create them
+# This will lead to the creation of the dependency files when running make clean
+# in a clean environment.
 -include $(DEPS)
