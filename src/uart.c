@@ -49,7 +49,7 @@ void UART_putd(int16_t d)
 
 void UART_putd_32(int32_t val)
 {
-	char s[7];
+	char s[11];
 	ltoa(val, s, 10);
 	UART_puts(s);
 }
