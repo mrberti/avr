@@ -12,6 +12,12 @@ MCU = atmega328p
 AVRDUDE_DEVICE = usbasp
 AVRDUDE_PORT = usb
 
+# Set the optimization level: 0,1,2,3,s
+OPTLEVEL = 2
+
+# Set debug information
+DEBUG = dwarf-2
+
 SRCDIR = src
 INCDIR = include
 OBJDIR = obj
@@ -26,10 +32,14 @@ DEPFLAGS = -MM
 
 INCFLAGS = -I./$(INCDIR)
 
+# Define compiler options here
 CFLAGS = -mmcu=$(MCU)
-CFLAGS += -O2
+CFLAGS += -O$(OPTLEVEL)
 CFLAGS += -Wall -Wstrict-prototypes
+CFLAGS += -funsigned-char -funsigned-bitfields
+CFLAGS += -fpack-struct -fshort-enums
 CFLAGS += -std=gnu99
+CFLAGS += -g$(DEBUG)
 
 # The next two options will prevent unused functions to be linked
 CFLAGS += -fdata-sections -ffunction-sections
@@ -42,7 +52,7 @@ AVRDUDE_OPTIONS += -c $(AVRDUDE_DEVICE) -P $(AVRDUDE_PORT)
 
 .PHONY : all start depends objects hex lss target program clean cleaner
 
-all: start depends target lss hex
+all: start depends target lss hex finish
 
 start:
 	@echo "Starting build process..."
@@ -59,6 +69,12 @@ hex: $(BINDIR)/$(TARGET).hex
 
 lss: $(OBJS:.o=.lss)
 
+finish:
+	@echo ""
+	avr-size $(BINDIR)/$(TARGET).elf
+	@echo ""
+	@echo "Build finished."
+
 # target: Create the target binary
 $(BINDIR)/$(TARGET).elf: $(OBJS)
 	@echo ""
@@ -66,7 +82,6 @@ $(BINDIR)/$(TARGET).elf: $(OBJS)
 	@mkdir -p $(BINDIR)
 	avr-gcc $(CFLAGS) $(LDFLAGS) -o $@ $^
 	avr-objdump -S $@ > $(BINDIR)/$(TARGET).lss
-	avr-size $@
 
 # hex: Create binary file to download
 $(BINDIR)/$(TARGET).hex: $(BINDIR)/$(TARGET).elf
