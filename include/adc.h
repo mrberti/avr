@@ -1,7 +1,15 @@
 #ifndef ADC_H
 #define ADC_H
 
+#include "global.h"
+
 #include <avr/io.h>
+
+/*
+ * CONFIGURATION
+ */
+#define ADC_USE_INTERRUPTS (1)
+//#define ADC_USE_8BIT (1)
 
 /*
  * ADMUX
@@ -36,6 +44,7 @@
 #define ADC_AUTO_TRIGGER_ENABLE (1<<ADATE)
 #define ADC_INTERRUPT_FLAG      (1<<ADIF)
 #define ADC_INTERRUPT_ENABLE    (1<<ADIE)
+#define ADC_INTERRUPT_DISABLE   (0<<ADIE)
 
 #define ADC_PRESCALER_MASK   (7<<ADPS0)
 #define ADC_PRESCALER_CLK2   (0<<ADPS0)
@@ -47,14 +56,10 @@
 #define ADC_PRESCALER_CLK128 (7<<ADPS0)
 
 /*
- * ADCL/H
- */
-
-/*
  * ADCSRB
  */
 #define ADC_ANALOG_COMP_MPLX_ENABLE  (1<<ACME)
-#define ADC_ANALOG_COMP_MPLX_DISABLE (1<<ACME)
+#define ADC_ANALOG_COMP_MPLX_DISABLE (0<<ACME)
 
 #define ADC_TRIGGER_SOURCE_MASK         (7<<ADTS0)
 #define ADC_TRIGGER_SOURCE_FREE_RUNNING (0<<ADTS0)
@@ -75,14 +80,57 @@
  * GENERAL MACROS
  */
 #define ADC_CONVERSION_IN_PROGRESS (ADCSRA&(1<<ADSC))
+#ifdef ADC_USE_8BIT
+# define ADC_CONVERSION_REG (ADCH)
+#else
+# define ADC_CONVERSION_REG (ADC)
+#endif
 
 /*
  * GENERAL CONFIGURATIONS
  */
-#define ADC_PRESCALER ADC_PRESCALER_CLK32
+#ifdef ADC_USE_8BIT
+# define ADC_ADJUST ADC_ADJUST_LEFT
+#else
+# define ADC_ADJUST ADC_ADJUST_RIGHT
+#endif //ADC_USE_8BIT
 
+#define ADC_REF_SEL ADC_REF_SEL_AVCC
+#define ADC_PRESCALER ADC_PRESCALER_CLK32
+#ifdef ADC_USE_INTERRUPTS
+# define ADC_INTERRUPT ADC_INTERRUPT_ENABLE
+#else
+# define ADC_INTERRUPT ADC_INTERRUPT_DISABLE
+#endif
+
+
+/*
+ * TYPEDEFS
+ */
+# ifdef ADC_USE_8BIT
+typedef uint8_t ADC_val_t;
+# else
+typedef uint16_t ADC_val_t;
+# endif //ADC_USE_8BIT
+
+typedef struct ADC_t_struct {
+  uint32_t timestamp;
+  ADC_val_t val;
+} ADC_t;
+
+/**
+ * GLOBAL VARIBALES
+ */
+#define ADC_BUFFER_SIZE 8
+extern ADC_val_t adc_buffer[ADC_BUFFER_SIZE];
+
+/*
+ * FUNCTION PROTOTYPES
+ */
 void ADC_init(void);
 void ADC_set_running(void);
-uint16_t ADC_single_shot(uint8_t adc_chan);
+void ADC_start_conversion(uint8_t adc_chan);
+ADC_val_t ADC_single_shot(uint8_t adc_chan);
+ADC_t ADC_single_shot_timestamp(uint8_t adc_chan);
 
 #endif //ADC_H
