@@ -13,7 +13,7 @@ AVRDUDE_DEVICE = usbasp
 AVRDUDE_PORT = usb
 
 # Set the optimization level: 0,1,2,3,s
-OPTLEVEL = 2
+OPTLEVEL = 1
 
 # Set debug information
 DEBUG = dwarf-2
@@ -24,50 +24,70 @@ OBJDIR = obj
 BINDIR = bin
 DEPDIR = $(OBJDIR)
 
-SRCS = $(wildcard $(SRCDIR)/*.c)
-OBJS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
-DEPS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.d,$(SRCS))
-
 DEPFLAGS = -MM
 
 INCFLAGS = -I./$(INCDIR)
 
-# Define compiler options here
-CFLAGS = -mmcu=$(MCU)
-CFLAGS += -O$(OPTLEVEL)
-CFLAGS += -Wall -Wstrict-prototypes
-CFLAGS += -funsigned-char -funsigned-bitfields
-CFLAGS += -fpack-struct -fshort-enums
-CFLAGS += -std=gnu99
-CFLAGS += -g$(DEBUG)
+# C sources
+SRCS = $(wildcard $(SRCDIR)/*.c)
+OBJS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
+DEPS = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.d,$(SRCS))
 
+# C++ sources
+SRCS_CPP = $(wildcard $(SRCDIR)/*.cpp)
+OBJS_CPP = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRCS_CPP))
+DEPS_CPP = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.d,$(SRCS_CPP))
+
+# Define common C and C++ compiler options here
+CFLAGS_COMMON = -mmcu=$(MCU)
+CFLAGS_COMMON += -O$(OPTLEVEL)
+CFLAGS_COMMON += -Wall
+CFLAGS_COMMON += -funsigned-char -funsigned-bitfields
+CFLAGS_COMMON += -fpack-struct -fshort-enums
+CFLAGS_COMMON += -g$(DEBUG)
 # The next two options will prevent unused functions to be linked
-CFLAGS += -fdata-sections -ffunction-sections
+CFLAGS_COMMON += -fdata-sections -ffunction-sections
 LDFLAGS = -Wl,--gc-sections
+
+# Define C only compiler flags
+CFLAGS = $(CFLAGS_COMMON)
+CFLAGS += -std=gnu99
+CFLAGS += -Wstrict-prototypes
+
+# Define C++ only compiler flags
+CPPFLAGS = $(CFLAGS_COMMON)
+
+# Define linker flags
+LDFLAGS += -mmcu=$(MCU)
+
+# Define disassembler flags
+LSSFLAGS += -d # -d or -S
 
 # If you do not want the device to be erase, uncomment the next line
 #AVRDUDE_OPTIONS += -D
-AVRDUDE_OPTIONS = -p $(MCU)
+AVRDUDE_OPTIONS += -p $(MCU)
 AVRDUDE_OPTIONS += -c $(AVRDUDE_DEVICE) -P $(AVRDUDE_PORT)
 
-.PHONY : all start depends objects hex lss target program clean cleaner
+.PHONY : all start depends objects lss hex target program clean cleaner
 
-all: start depends target lss hex finish
+# The first target will be the default target
+all: start depends objects lss target hex finish
 
 start:
 	@echo "Starting build process..."
-	@echo "Using sources: $(SRCS)"
-	@echo "Using objects: $(OBJS)"
+	@echo "Using C sources: $(SRCS)"
+	@echo "Using C++ sources: $(SRCS_CPP)"
+	@echo "Using objects: $(OBJS) $(OBJS_CPP)"
 
-depends: $(DEPS)
+depends: $(DEPS) $(DEPS_CPP)
 
-objects: $(OBJS)
+objects: $(OBJS) $(OBJS_CPP)
 
 target: $(BINDIR)/$(TARGET).elf
 
 hex: $(BINDIR)/$(TARGET).hex
 
-lss: $(OBJS:.o=.lss)
+lss: $(OBJS:.o=.lss) $(OBJS_CPP:.o=.lss)
 
 finish:
 	@echo ""
@@ -76,12 +96,12 @@ finish:
 	@echo "Build finished."
 
 # target: Create the target binary
-$(BINDIR)/$(TARGET).elf: $(OBJS)
+$(BINDIR)/$(TARGET).elf: $(OBJS) $(OBJS_CPP)
 	@echo ""
 	@echo "Linking target $@: $^"
 	@mkdir -p $(BINDIR)
-	avr-gcc $(CFLAGS) $(LDFLAGS) -o $@ $^
-	avr-objdump -S $@ > $(BINDIR)/$(TARGET).lss
+	avr-gcc $(LDFLAGS) -o $@ $^
+	avr-objdump $(LSSFLAGS) $@ > $(BINDIR)/$(TARGET).lss
 
 # hex: Create binary file to download
 $(BINDIR)/$(TARGET).hex: $(BINDIR)/$(TARGET).elf
@@ -94,22 +114,38 @@ $(BINDIR)/$(TARGET).hex: $(BINDIR)/$(TARGET).elf
 # objects: will create objects
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	@echo ""
-	@echo "Compiling: $< => $@"
+	@echo "Compiling C source: $< => $@"
 	@mkdir -p $(OBJDIR)
 	avr-gcc $(CFLAGS) $(INCFLAGS) -c $< -o $@
+
+# objects: will create objects from cpp files
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+	@echo ""
+	@echo "Compiling C++ source: $< => $@"
+	@mkdir -p $(OBJDIR)
+	avr-g++ $(CPPFLAGS) $(INCFLAGS) -c $< -o $@
 
 # depends: Create dependendies
 $(OBJDIR)/%.d: $(SRCDIR)/%.c
 	@echo ""
 	@echo "Creating depend file: $< => $@"
 	@mkdir -p $(OBJDIR)
-	avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^|$@ |' -e 's| | $(OBJDIR)/|' > $@
+#avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^|$@ |' -e 's| | $(OBJDIR)/|' > $@
+	avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^| $(OBJDIR)/|'> $@
+
+# depends: Create dependendies from C++ files
+$(OBJDIR)/%.d: $(SRCDIR)/%.cpp
+	@echo ""
+	@echo "Creating depend file CPP: $< => $@"
+	@mkdir -p $(OBJDIR)
+#avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^|$@ |' -e 's| | $(OBJDIR)/|' > $@
+	avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^| $(OBJDIR)/|'> $@
 
 # lss: Create assembler listings for all objects
 $(OBJDIR)/%.lss: $(OBJDIR)/%.o
 	@echo ""
-	@echo "Creating listing file: $@ => $<"
-	avr-objdump -S $< > $@
+	@echo "Creating listing file: $< => $@"
+	avr-objdump $(LSSFLAGS) $< > $@
 
 # Download the program to the device
 program: $(BINDIR)/$(TARGET).hex
@@ -132,4 +168,4 @@ cleaner:
 # If the dependency files do not exist, make will create them
 # This will lead to the creation of the dependency files when running make clean
 # in a clean environment.
--include $(DEPS)
+-include $(DEPS) $(DEPS_CPP)
