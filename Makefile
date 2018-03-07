@@ -1,10 +1,5 @@
 ## A simple make file for avr-gcc
 #
-# Known problems:
-#  - When running 'make clean' two times, the dependency files will be generated
-#    but deleted directly. This is because on including they do not exist and
-#    thus, make generates them.
-#
 # Author: Simon Bertling, 2018
 
 TARGET = main
@@ -13,7 +8,10 @@ AVRDUDE_DEVICE = usbasp
 AVRDUDE_PORT = usb
 
 # Set the optimization level: 0,1,2,3,s
-OPTLEVEL = 1
+OPTLEVEL = 2
+
+# Define disassembler flags
+LSSFLAGS += -S # -d or -S
 
 # Set debug information
 DEBUG = dwarf-2
@@ -59,9 +57,6 @@ CPPFLAGS = $(CFLAGS_COMMON)
 
 # Define linker flags
 LDFLAGS += -mmcu=$(MCU)
-
-# Define disassembler flags
-LSSFLAGS += -d # -d or -S
 
 # If you do not want the device to be erase, uncomment the next line
 #AVRDUDE_OPTIONS += -D
@@ -129,9 +124,9 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 $(OBJDIR)/%.d: $(SRCDIR)/%.c
 	@echo ""
 	@echo "Creating depend file: $< => $@"
-	@mkdir -p $(OBJDIR)
+	@mkdir -p $(DEPDIR)
 #avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^|$@ |' -e 's| | $(OBJDIR)/|' > $@
-	avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^| $(OBJDIR)/|'> $@
+	avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^| $(DEPDIR)/|'> $@
 
 # depends: Create dependendies from C++ files
 $(OBJDIR)/%.d: $(SRCDIR)/%.cpp
@@ -156,16 +151,13 @@ clean:
 	@echo "Removing build artifacts..."
 	-rm -rf $(BINDIR)/*
 	-rm -rf $(OBJDIR)/*
-	-rm -rf $(INCDIR)/*.h.gch
+	-rm -rf $(INCDIR)/*.h.gch $(INCDIR)/*.hpp.gch
 
 cleaner:
 	@echo ""
 	@echo "Removing directories..."
 	-rm -rf $(BINDIR)
 	-rm -rf $(OBJDIR)
-	-rm -rf $(INCDIR)/*.h.gch
+	-rm -rf $(INCDIR)/*.h.gch $(INCDIR)/*.hpp.gch
 
-# If the dependency files do not exist, make will create them
-# This will lead to the creation of the dependency files when running make clean
-# in a clean environment.
--include $(DEPS) $(DEPS_CPP)
+-include $(wildcard $(DEPDIR)/*.d)

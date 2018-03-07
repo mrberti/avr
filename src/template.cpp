@@ -1,32 +1,37 @@
 
-#include "template.hpp"
+#include "template.h"
+
+#include <stdint.h>
+
+//typedef int T;
 
 template <typename T>
-T test_template_temp(T a)
+class test_class
+{
+public:
+  T test(T a)
+  {
+    return a*2;
+  }
+};
+
+
+
+test_class<char> A_char;
+
+int C::f(int a)
 {
   return a*a;
 }
 
-char _test_template_char(char a)
+EXPORT_C int test_template_int(int a)
 {
-  a = test_template_temp<char>(a);
-  return a;
+  int ret = a;
+  return ret;
 }
 
-int _test_template_int(int a)
+EXPORT_C char test_template_char(char a, C* c)
 {
-  a = test_template_temp<int>(a);
-  return a;
-}
-
-extern "C" int test_template_int(int a)
-{
-  a = _test_template_int(a);
-  return a;
-}
-
-extern "C" char test_template_char(char a)
-{
-  a = _test_template_char(a);
-  return a;
+  //c = new C();
+  return c->f(a);
 }
