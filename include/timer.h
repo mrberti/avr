@@ -105,6 +105,8 @@
 
 extern volatile uint32_t timer0_us_since_start;
 extern volatile uint32_t timer0_ms_since_start;
+extern volatile uint8_t timer0_ms_flag;
+extern volatile uint8_t timer0_adc_flag;
 
 /**
  * FUNCTION PROTOTYPES

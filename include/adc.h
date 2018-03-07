@@ -2,14 +2,15 @@
 #define ADC_H
 
 #include "global.h"
+#include "buffer.h"
 
 #include <avr/io.h>
 
 /*
  * CONFIGURATION
  */
-#define ADC_USE_INTERRUPTS (1)
-//#define ADC_USE_8BIT (1)
+//#define ADC_USE_INTERRUPTS (1)
+#define ADC_USE_8BIT (1)
 
 /*
  * ADMUX
@@ -103,7 +104,6 @@
 # define ADC_INTERRUPT ADC_INTERRUPT_DISABLE
 #endif
 
-
 /*
  * TYPEDEFS
  */
@@ -121,8 +121,12 @@ typedef struct ADC_t_struct {
 /**
  * GLOBAL VARIBALES
  */
-#define ADC_BUFFER_SIZE 8
-extern ADC_val_t adc_buffer[ADC_BUFFER_SIZE];
+#ifdef ADC_USE_8BIT
+typedef buffer_u8_t adc_buf_t;
+#else
+typedef buffer_u16_t adc_buf_t;
+#endif
+extern adc_buf_t adc_buffer;
 
 /*
  * FUNCTION PROTOTYPES

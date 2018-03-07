@@ -7,8 +7,6 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
-buffer_u16_t buf;
-
 int main(void)
 {
 	DDRB = (1<<PB5);
@@ -21,39 +19,32 @@ int main(void)
 	timer0_init();
 	timer0_start();
 
-	//ADC_init();
+	ADC_init();
+#define ADCs 1
+	ADC_val_t vals[ADCs];
 
-	buffer_u16_init(&buf);
-
-	int i = 0;
-	//char c = 0;
 	while(1)
 	{
-		i += 10;
-		uint8_t usage = 0;
-		UART_putd(i);
-		UART_puts(",");
-		UART_putd(buffer_u16_write(&buf, i));
-		UART_puts(",");
-		UART_putd(buffer_u16_usage(&buf, &usage));
-		UART_puts(",usage ");
-		UART_putd(usage);
-		if(usage == BUFFER_SIZE_MAX)
-		{
-			UART_puts(", values: ");
-			while(usage > 0)
-			{
-				uint16_t val = 0;
-				buffer_u16_read(&buf,&val);
-				buffer_u16_usage(&buf, &usage);
-				UART_putd(val);
-				UART_puts(", ");
-				PORTD |= (1<<PD3);
-			}
+		/* Idle wait */
+		while(timer0_adc_flag == 0) {
+			PORTD |= (1<<PD2);
 		}
-		PORTD &= ~(1<<PD3);
+		timer0_adc_flag = 0;
+
+		UART_putd_32(timer0_us_since_start);
+		UART_puts("\t");
+
+		for(int i=0;i<ADCs;i++)
+			vals[i] = ADC_single_shot(ADC_MUX_ADC1+i);
+
+		for(int i=0;i<ADCs;i++)
+		{
+			UART_putd(vals[i]);
+			UART_puts("\t");
+		}
+
 		UART_puts("\n\r");
-		timer0_wait_ms_blocking(100);
+		PORTD &= ~(1<<PD2);
 	}
 	return 0;
 }

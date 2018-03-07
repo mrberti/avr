@@ -6,12 +6,15 @@
 
 
 #include "uart.h"
+#include "adc.h"
 
 /**
  * GLOBAL VARIABLE INITIALIZATION
  */
 volatile uint32_t timer0_us_since_start = 0;
 volatile uint32_t timer0_ms_since_start = 0;
+volatile uint8_t timer0_ms_flag = 0;
+volatile uint8_t timer0_adc_flag = 0;
 
 /**
  * FUNCTION IMPLEMENTATION
@@ -109,12 +112,20 @@ ISR(TIMER0_COMPA_vect)
   timer0_us_since_start += TIMER0_US_PER_TICK;
 
   /* set mili seconds */
-  static uint16_t us = 0;
-  us = us+TIMER0_US_PER_TICK;
-  if(us>=1000)
+  static uint16_t us_1ms = 0;
+  static uint16_t us_ads = 0;
+  us_1ms = us_1ms+TIMER0_US_PER_TICK;
+  us_ads = us_ads+TIMER0_US_PER_TICK;
+  if(us_1ms>=1000)
   {
     timer0_ms_since_start += 1;
-    us = 0;
+    us_1ms = 0;
+    timer0_ms_flag = 1;
+  }
+  if(us_ads>=1000)
+  {
+    timer0_adc_flag = 1;
+    us_ads = 0;
   }
 }
 

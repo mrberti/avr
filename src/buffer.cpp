@@ -1,4 +1,3 @@
-#include "global.h"
 #include "buffer.h"
 
 template <typename T_buf> void

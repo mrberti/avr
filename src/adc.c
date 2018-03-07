@@ -1,23 +1,25 @@
 #include "adc.h"
 #include "global.h"
 #include "timer.h"
+#include "buffer.h"
 
 #include <stdint.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-ADC_val_t adc_buffer[ADC_BUFFER_SIZE];
+adc_buf_t adc_buffer;
 
 void ADC_init()
 {
   ADMUX =   ADC_REF_SEL \
           | ADC_ADJUST;
   ADCSRA =  ADC_ENABLE \
-          | ADC_PRESCALER
-          | ADC_INTERRUPT_ENABLE;
+          | ADC_PRESCALER \
+          | ADC_INTERRUPT;
 
   /* After enabling the ADC throw away the first few samples to let the ADC
      stabilize */
+  /* TODO: This step seems to be victim to optimization */
   for(uint8_t i = 1;i<10;i++)
     ADC_single_shot(ADC_MUX_0V);
 }
@@ -64,16 +66,10 @@ ADC_t ADC_single_shot_timestamp(uint8_t adc_chan)
 #ifdef ADC_USE_INTERRUPTS
 ISR(ADC_vect)
 {
-  static uint8_t index = 0;
-
-  adc_buffer[index] = ADC_CONVERSION_REG;
-
-  if(index < ADC_BUFFER_SIZE)
-    index += 1;
-  else
-  {
-    PORTD ^= (1<<PD3);
-    index = 0;
-  }
+  PORTD |= (1<<PD3);
+  ADC_val_t adc_val = ADC_CONVERSION_REG;
+  //while(buffer_u16_write(&adc_buffer,adc_val) != BUFFER_SUCCESS);
+  buffer_u16_write(&adc_buffer,adc_val);
+  PORTD &= ~(1<<PD3);
 }
 #endif //ADC_USE_INTERRUPTS
