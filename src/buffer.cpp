@@ -95,50 +95,50 @@ buffer_read(T_buf *buf, T_val *val)
  * C WRAPPER FUNCTIONS
  */
 /* uint8_t */
-EXPORT_C void
+extern "C" void
 buffer_u8_init(buffer_u8_t *buf)
 {
   return buffer_init<buffer_u8_t>(buf);
 }
 
-EXPORT_C buffer_result_t
+extern "C" buffer_result_t
 buffer_u8_usage(buffer_u8_t *buf, uint8_t *usage)
 {
   return buffer_usage<buffer_u8_t>(buf,usage);
 }
 
-EXPORT_C buffer_result_t
+extern "C" buffer_result_t
 buffer_u8_write(buffer_u8_t *buf, uint8_t val)
 {
   return buffer_write<buffer_u8_t, uint8_t>(buf,val);
 }
 
-EXPORT_C buffer_result_t
+extern "C" buffer_result_t
 buffer_u8_read(buffer_u8_t *buf, uint8_t *val)
 {
   return buffer_read<buffer_u8_t>(buf,val);
 }
 
 /* uint16_t */
-EXPORT_C void
+extern "C" void
 buffer_u16_init(buffer_u16_t *buf)
 {
   return buffer_init<buffer_u16_t>(buf);
 }
 
-EXPORT_C buffer_result_t
+extern "C" buffer_result_t
 buffer_u16_usage(buffer_u16_t *buf, uint8_t *usage)
 {
   return buffer_usage<buffer_u16_t>(buf,usage);
 }
 
-EXPORT_C buffer_result_t
+extern "C" buffer_result_t
 buffer_u16_write(buffer_u16_t *buf, uint16_t val)
 {
   return buffer_write<buffer_u16_t, uint16_t>(buf,val);
 }
 
-EXPORT_C buffer_result_t
+extern "C" buffer_result_t
 buffer_u16_read(buffer_u16_t *buf, uint16_t *val)
 {
   return buffer_read<buffer_u16_t, uint16_t>(buf,val);

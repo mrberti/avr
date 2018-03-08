@@ -9,8 +9,8 @@
 /*
  * CONFIGURATION
  */
-//#define ADC_USE_INTERRUPTS (1)
-#define ADC_USE_8BIT (1)
+#define ADC_USE_INTERRUPTS (1)
+//#define ADC_USE_8BIT (1)
 
 /*
  * ADMUX
@@ -98,20 +98,21 @@
 
 #define ADC_REF_SEL ADC_REF_SEL_AVCC
 #define ADC_PRESCALER ADC_PRESCALER_CLK32
+
 #ifdef ADC_USE_INTERRUPTS
 # define ADC_INTERRUPT ADC_INTERRUPT_ENABLE
 #else
 # define ADC_INTERRUPT ADC_INTERRUPT_DISABLE
-#endif
+#endif //ADC_USE_INTERRUPTS
 
 /*
  * TYPEDEFS
  */
-# ifdef ADC_USE_8BIT
+#ifdef ADC_USE_8BIT
 typedef uint8_t ADC_val_t;
-# else
+#else
 typedef uint16_t ADC_val_t;
-# endif //ADC_USE_8BIT
+#endif //ADC_USE_8BIT
 
 typedef struct ADC_t_struct {
   uint32_t timestamp;
@@ -134,6 +135,7 @@ extern adc_buf_t adc_buffer;
 void ADC_init(void);
 void ADC_set_running(void);
 void ADC_start_conversion(uint8_t adc_chan);
+ADC_val_t ADC_get_conversion(void);
 ADC_val_t ADC_single_shot(uint8_t adc_chan);
 ADC_t ADC_single_shot_timestamp(uint8_t adc_chan);
 

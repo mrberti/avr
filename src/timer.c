@@ -3,8 +3,6 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-
-
 #include "uart.h"
 #include "adc.h"
 
@@ -57,17 +55,17 @@ void timer0_stop()
   TCCR0B = TIMER0_CLK_DIV_STOP;
 }
 
-uint8_t timer0_get_cnt()
+inline uint8_t timer0_get_cnt()
 {
   return TCNT0;
 }
 
-void timer0_set_ocra(uint8_t ocr_val)
+inline void timer0_set_ocra(uint8_t ocr_val)
 {
   OCR0A = ocr_val;
 }
 
-void timer0_set_ocrb(uint8_t ocr_val)
+inline void timer0_set_ocrb(uint8_t ocr_val)
 {
   OCR0B = ocr_val;
 }
@@ -109,23 +107,33 @@ ISR(TIMER0_OVF_vect)
 
 ISR(TIMER0_COMPA_vect)
 {
+  static uint16_t us_1ms = 0;
+  static uint16_t us_adc = 0;
+  static uint16_t us_main_loop = 0;
+
   timer0_us_since_start += TIMER0_US_PER_TICK;
 
-  /* set mili seconds */
-  static uint16_t us_1ms = 0;
-  static uint16_t us_ads = 0;
   us_1ms = us_1ms+TIMER0_US_PER_TICK;
-  us_ads = us_ads+TIMER0_US_PER_TICK;
+  us_adc = us_adc+TIMER0_US_PER_TICK;
+  us_main_loop = us_main_loop+TIMER0_US_PER_TICK;
+
+  if(us_main_loop >= MAIN_LOOP_TIME_US)
+  {
+    SET_EVF(EVF_TIMER0_MAIN_LOOP_WAIT_FINISHED);
+    us_main_loop = 0;
+  }
+
   if(us_1ms>=1000)
   {
+    SET_EVF(EVF_TIMER0_1MS_PASSED);
     timer0_ms_since_start += 1;
     us_1ms = 0;
-    timer0_ms_flag = 1;
   }
-  if(us_ads>=1000)
+
+  if(us_adc>=ADC_LOOP_TIME_US)
   {
-    timer0_adc_flag = 1;
-    us_ads = 0;
+    SET_EVF(EVF_START_ADC);
+    us_adc = 0;
   }
 }
 
