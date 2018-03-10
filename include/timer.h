@@ -74,8 +74,6 @@
 /**
  * GLOBAL VARIBALES
  */
-#define TIMER0_TICK_RESOLUTION_US 50
-
 /* 10 us resolution timer: OCRA=19,  CLKDIV=8*/
 #if TIMER0_TICK_RESOLUTION_US == 10
 # define TIMER0_OCRA_VAL    (19)

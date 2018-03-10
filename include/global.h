@@ -19,17 +19,24 @@ extern volatile uint8_t event_flags;
 #define EVF_TIMER0_1MS_PASSED              (1<<2)
 #define EVF_TIMER0_MAIN_LOOP_WAIT_FINISHED (1<<3)
 
-#define EVF_SET(flag)   (event_flags  &  (flag))
+#define EVF_IS_SET(flag)   (event_flags  &  (flag))
 #define CLEAR_EVF(flag) (event_flags &= ~(flag))
 #define SET_EVF(flag)   (event_flags |=  (flag))
 #define RESET_EVF()     (event_flags = 0)
 
+#define TIMER0_TICK_RESOLUTION_US 50
 #define MAIN_LOOP_TIME_US (1000)
-#define ADC_LOOP_TIME_US  (1000)
+#define ADC_LOOP_TIME_US  (60000)
 
-#define LED_ALIVE (PD2)
-#define LED_ADC (PD4)
+#define LED_RED    (1<<PD2)
+#define LED_YELLOW (1<<PD3)
+#define LED_GREEN  (1<<PD4)
+
+#define LED_ALIVE  (LED_RED)
+#define LED_TIMER0 (LED_YELLOW)
+#define LED_ADC    (LED_GREEN)
 
 //#define DISABLE_INTERRUPT_COMPILE
+#define UART_DEBUG
 
 #endif

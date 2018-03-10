@@ -108,6 +108,7 @@ ISR(TIMER0_OVF_vect)
 
 ISR(TIMER0_COMPA_vect)
 {
+  PORTD |= LED_TIMER0;
   static uint16_t us_1ms = 0;
   static uint16_t us_adc = 0;
   static uint16_t us_main_loop = 0;
@@ -136,6 +137,7 @@ ISR(TIMER0_COMPA_vect)
     SET_EVF(EVF_START_ADC);
     us_adc = 0;
   }
+  PORTD &= ~LED_TIMER0;
 }
 
 ISR(TIMER0_COMPB_vect)
