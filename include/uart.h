@@ -91,6 +91,8 @@ void UART_putd_32(int32_t);
 
 void UART_puth(int16_t d);
 
+void UART_clear_screen();
+
 void UART_print_ubrr_vals(void);
 
 void UART_main_test(void);

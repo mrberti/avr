@@ -61,6 +61,11 @@ void UART_puth(int16_t d)
 	UART_puts(s);
 }
 
+void UART_clear_screen()
+{
+	UART_puts("\033[2J");
+}
+
 void UART_print_val(char *str_baud, uint16_t ubrr, uint32_t baud_real)
 {
 	UART_puts("\n\r");
