@@ -11,10 +11,12 @@ AVRDUDE_PORT = usb
 OPTLEVEL = 2
 
 # Define disassembler flags
-LSSFLAGS += -S # -d or -S
+LSSFLAGS = -S # -d or -S
+#LSSFLAGS = -d
 
 # Set debug information
 DEBUG = dwarf-2
+#DEBUG = stabs
 
 SRCDIR = src
 INCDIR = include
@@ -86,7 +88,8 @@ lss: $(OBJS:.o=.lss) $(OBJS_CPP:.o=.lss)
 
 finish:
 	@echo ""
-	avr-size $(BINDIR)/$(TARGET).elf
+	avr-size -C --mcu=$(MCU) $(BINDIR)/$(TARGET).elf
+	avr-size --mcu=$(MCU) $(BINDIR)/$(TARGET).elf
 	@echo ""
 	@echo "Build finished."
 

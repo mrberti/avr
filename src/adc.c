@@ -7,7 +7,8 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-adc_buf_t adc_buffer;
+//adc_buf_t adc_buffer;
+BUFFER_DECLARE(buf_adc,int,ADC_BUFFERSIZE);
 
 void ADC_init()
 {
@@ -22,6 +23,9 @@ void ADC_init()
   /* TODO: This step seems to be victim to optimization */
   for(uint8_t i = 1;i<10;i++)
     ADC_single_shot(ADC_MUX_0V);
+
+  /* Initialize the ADC buffer */
+  BUFFER_INIT(buf_adc,int,ADC_BUFFERSIZE);
 }
 
 void ADC_set_running()
@@ -51,6 +55,7 @@ void ADC_start_conversion(uint8_t adc_chan)
 {
   /* As the results will be read from the interrupt, they must be enabled before
   calling this function */
+  PORTD |= (1<<LED_ADC);
   SET_8BIT_REG(ADMUX,ADC_MUX_MASK,adc_chan);
   ADCSRA |= ADC_START_CONVERSION;
 }
@@ -69,13 +74,14 @@ ADC_t ADC_single_shot_timestamp(uint8_t adc_chan)
 }
 
 #ifdef ADC_USE_INTERRUPTS
+#ifndef DISABLE_INTERRUPT_COMPILE
 ISR(ADC_vect)
 {
-  //PORTD |= (1<<PD3);
   SET_EVF(EVF_ADC_CONV_FINISHED);
   //ADC_val_t adc_val = ADC_CONVERSION_REG;
-  //while(buffer_u16_write(&adc_buffer,adc_val) != BUFFER_SUCCESS);
-  //buffer_u16_write(&adc_buffer,adc_val);
-  //PORTD &= ~(1<<PD3);
+  int adc_val = ADC_CONVERSION_REG;
+  buffer_write(&buf_adc, &adc_val);
+  PORTD &= ~(1<<LED_ADC);
 }
+#endif //DISABLE_INTERRUPT_COMPILE
 #endif //ADC_USE_INTERRUPTS

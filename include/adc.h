@@ -1,5 +1,5 @@
-#ifndef ADC_H
-#define ADC_H
+#ifndef _ADC_H
+#define _ADC_H
 
 #include "global.h"
 #include "buffer.h"
@@ -122,12 +122,17 @@ typedef struct ADC_t_struct {
 /**
  * GLOBAL VARIBALES
  */
+/*
 #ifdef ADC_USE_8BIT
 typedef buffer_u8_t adc_buf_t;
 #else
 typedef buffer_u16_t adc_buf_t;
 #endif
 extern adc_buf_t adc_buffer;
+*/
+#define ADC_BUFFERSIZE 8
+extern buffer_t buf_adc;
+extern int buf_adc_data[ADC_BUFFERSIZE];
 
 /*
  * FUNCTION PROTOTYPES

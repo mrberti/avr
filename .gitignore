@@ -11,6 +11,7 @@
 *.d
 *.h.gch
 *.hpp.gch
+*.swp
 bin/
 obj/
 build/

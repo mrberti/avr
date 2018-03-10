@@ -27,4 +27,9 @@ extern volatile uint8_t event_flags;
 #define MAIN_LOOP_TIME_US (1000)
 #define ADC_LOOP_TIME_US  (1000)
 
+#define LED_ALIVE (PD2)
+#define LED_ADC (PD4)
+
+//#define DISABLE_INTERRUPT_COMPILE
+
 #endif

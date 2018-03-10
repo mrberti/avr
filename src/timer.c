@@ -101,6 +101,7 @@ void timer0_wait_ms_blocking(uint32_t wait_ms)
 /**
  * INTERRUPT ROUTINES
  */
+#ifndef DISABLE_INTERRUPT_COMPILE
 ISR(TIMER0_OVF_vect)
 {
 }
@@ -140,3 +141,4 @@ ISR(TIMER0_COMPA_vect)
 ISR(TIMER0_COMPB_vect)
 {
 }
+#endif //DISABLE_INTERRUPT_COMPILE
