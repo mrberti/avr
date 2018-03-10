@@ -71,7 +71,7 @@ AVRDUDE_OPTIONS += -c $(AVRDUDE_DEVICE) -P $(AVRDUDE_PORT)
 all: start depends objects lss target hex finish
 
 start:
-	@echo "Starting build process..."
+	@echo "============ Starting build process for target: $(TARGET) ============"
 	@echo "Using C sources: $(SRCS)"
 	@echo "Using C++ sources: $(SRCS_CPP)"
 	@echo "Using objects: $(OBJS) $(OBJS_CPP)"
@@ -87,63 +87,53 @@ hex: $(BINDIR)/$(TARGET).hex
 lss: $(OBJS:.o=.lss) $(OBJS_CPP:.o=.lss)
 
 finish:
-	@echo ""
-	avr-size -C --mcu=$(MCU) $(BINDIR)/$(TARGET).elf
-	avr-size --mcu=$(MCU) $(BINDIR)/$(TARGET).elf
-	@echo ""
-	@echo "Build finished."
+	@avr-size -C --mcu=$(MCU) $(BINDIR)/$(TARGET).elf
+	@avr-size --mcu=$(MCU) $(BINDIR)/$(TARGET).elf | grep bytes
+	@echo "==================== Build finished ===================="
 
 # target: Create the target binary
 $(BINDIR)/$(TARGET).elf: $(OBJS) $(OBJS_CPP)
-	@echo ""
 	@echo "Linking target $@: $^"
 	@mkdir -p $(BINDIR)
-	avr-gcc $(LDFLAGS) -o $@ $^
-	avr-objdump $(LSSFLAGS) $@ > $(BINDIR)/$(TARGET).lss
+	@avr-gcc $(LDFLAGS) -o $@ $^
+	@avr-objdump $(LSSFLAGS) $@ > $(BINDIR)/$(TARGET).lss
 
 # hex: Create binary file to download
 $(BINDIR)/$(TARGET).hex: $(BINDIR)/$(TARGET).elf
-	@echo ""
-	@echo "Creating .hex file: $@ => $<"
-	mkdir -p $(BINDIR)
-	avr-objcopy -R .eeprom -R .fuse -R .lock -R .signature -O ihex $< $@
-	@echo ""
+	@echo "Creating hex file: $@ => $<"
+	@mkdir -p $(BINDIR)
+	@avr-objcopy -R .eeprom -R .fuse -R .lock -R .signature -O ihex $< $@
 
 # objects: will create objects
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
-	@echo ""
 	@echo "Compiling C source: $< => $@"
 	@mkdir -p $(OBJDIR)
-	avr-gcc $(CFLAGS) $(INCFLAGS) -c $< -o $@
+	@avr-gcc $(CFLAGS) $(INCFLAGS) -c $< -o $@
 
 # objects: will create objects from cpp files
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
-	@echo ""
 	@echo "Compiling C++ source: $< => $@"
 	@mkdir -p $(OBJDIR)
-	avr-g++ $(CPPFLAGS) $(INCFLAGS) -c $< -o $@
+	@avr-g++ $(CPPFLAGS) $(INCFLAGS) -c $< -o $@
 
 # depends: Create dependendies
 $(OBJDIR)/%.d: $(SRCDIR)/%.c
-	@echo ""
 	@echo "Creating depend file: $< => $@"
 	@mkdir -p $(DEPDIR)
 #avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^|$@ |' -e 's| | $(OBJDIR)/|' > $@
-	avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^| $(DEPDIR)/|'> $@
+	@avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^| $(DEPDIR)/|'> $@
 
 # depends: Create dependendies from C++ files
 $(OBJDIR)/%.d: $(SRCDIR)/%.cpp
-	@echo ""
 	@echo "Creating depend file CPP: $< => $@"
 	@mkdir -p $(OBJDIR)
 #avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^|$@ |' -e 's| | $(OBJDIR)/|' > $@
-	avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^| $(OBJDIR)/|'> $@
+	@avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^| $(OBJDIR)/|'> $@
 
 # lss: Create assembler listings for all objects
 $(OBJDIR)/%.lss: $(OBJDIR)/%.o
-	@echo ""
 	@echo "Creating listing file: $< => $@"
-	avr-objdump $(LSSFLAGS) $< > $@
+	@avr-objdump $(LSSFLAGS) $< > $@
 
 # Download the program to the device
 program: $(BINDIR)/$(TARGET).hex
