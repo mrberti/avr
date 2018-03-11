@@ -65,10 +65,10 @@ LDFLAGS += -mmcu=$(MCU)
 AVRDUDE_OPTIONS += -p $(MCU)
 AVRDUDE_OPTIONS += -c $(AVRDUDE_DEVICE) -P $(AVRDUDE_PORT)
 
-.PHONY : all start depends objects lss hex target program clean cleaner
+.PHONY : all start depends objects lss hex target size program clean cleaner
 
 # The first target will be the default target
-all: start depends objects lss target hex finish
+all: start depends objects lss target hex finish size
 
 start:
 	@echo "============ Starting build process for target: $(TARGET) ============"
@@ -86,9 +86,16 @@ hex: $(BINDIR)/$(TARGET).hex
 
 lss: $(OBJS:.o=.lss) $(OBJS_CPP:.o=.lss)
 
-finish:
+size: $(BINDIR)/$(TARGET).elf
 	@avr-size -C --mcu=$(MCU) $(BINDIR)/$(TARGET).elf
-	@avr-size --mcu=$(MCU) $(BINDIR)/$(TARGET).elf | grep bytes
+	@avr-size --mcu=$(MCU) $(BINDIR)/$(TARGET).elf
+
+# Download the program to the device
+#program: $(BINDIR)/$(TARGET).hex
+program: hex
+	avrdude $(AVRDUDE_OPTIONS) -U flash:w:$(BINDIR)/$(TARGET).hex:i
+
+finish:
 	@echo "==================== Build finished ===================="
 
 # target: Create the target binary
@@ -134,10 +141,6 @@ $(OBJDIR)/%.d: $(SRCDIR)/%.cpp
 $(OBJDIR)/%.lss: $(OBJDIR)/%.o
 	@echo "Creating listing file: $< => $@"
 	@avr-objdump $(LSSFLAGS) $< > $@
-
-# Download the program to the device
-program: $(BINDIR)/$(TARGET).hex
-	avrdude $(AVRDUDE_OPTIONS) -U flash:w:$(BINDIR)/$(TARGET).hex:i
 
 clean:
 	@echo ""
