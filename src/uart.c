@@ -226,6 +226,7 @@ void uart_buffer_write_string(char *s)
 			return;
 		s++;
 	}
+	uart_kickout();
 }
 
 ISR(USART_RX_vect)
