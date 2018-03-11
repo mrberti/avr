@@ -19,6 +19,7 @@ static void main_loop1(void);
 static void main_loop2(void);
 static void buffer_test1(void);
 static void buffer_test2(void);
+static void uart_buffered_test(void);
 
 int main(void)
 {
@@ -32,6 +33,7 @@ int main(void)
 UART_initialized\n\r\
 \n\r");
 
+	uart_buffered_test();
 	buffer_test2();
 	buffer_test1();
 	main_loop1();
@@ -290,5 +292,36 @@ void buffer_test2()
 		}
 		PORTD ^= LED_ALIVE;
 		//_delay_ms(500);
+	}
+}
+
+void uart_buffered_test()
+{
+	timer0_init();
+	timer0_start();
+	sei();
+	char temp;
+	long i = 0;
+	while(1)
+	{
+		uart_buffer_write_string("\n\r");
+		uart_buffer_write_long(timer0_us_since_start);
+		uart_buffer_write_string("\t");
+		uart_buffer_write_long(i);
+
+		i = 1;
+
+		if(buf_uart_rx.used >= 0)
+		{
+			while(buf_uart_rx.used > 0)
+			{
+				buffer_read(&buf_uart_rx,&temp);
+				UART_putc(temp);
+			}
+		}
+		PORTD ^= LED_ALIVE;
+
+		uart_kickout();
+		_delay_ms(2);
 	}
 }

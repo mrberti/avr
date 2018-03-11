@@ -31,17 +31,19 @@ extern volatile uint8_t event_flags;
 #define LED_RED    (1<<PD2)
 #define LED_YELLOW (1<<PD3)
 #define LED_GREEN  (1<<PD4)
+#define LED_BOARD  (1<<PB0)
 
 #define LED_ALIVE  (LED_RED)
 #define LED_TIMER0 (LED_YELLOW)
 #define LED_ADC    (LED_GREEN)
+#define LED_UART   (LED_GREEN)
 
-//#define DISABLE_INTERRUPT_COMPILE
 #define UART_DEBUG_LEVEL_NONE    0
 #define UART_DEBUG_LEVEL_ERROR   1
 #define UART_DEBUG_LEVEL_WARNING 2
 #define UART_DEBUG_LEVEL_NOTICE  3
 
-#define UART_DEBUG_LEVEL UART_DEBUG_LEVEL_WARNING
+#define UART_DEBUG_LEVEL UART_DEBUG_LEVEL_NONE
+//#define DISABLE_INTERRUPT_COMPILE
 
 #endif

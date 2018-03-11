@@ -7,7 +7,16 @@
  * \author	Simon Bertling
  */
 #include "global.h"
+#include "buffer.h"
 #include <inttypes.h>
+
+/*
+ * UART configuration
+ */
+#define UART_BUF_RX_SIZE  80
+#define UART_BUF_TX_SIZE  80
+extern buffer_t buf_uart_rx;
+extern buffer_t buf_uart_tx;
 
 /**
  * Macros for calculating the UBBR values.
@@ -50,7 +59,7 @@
  * \param ubrr: The 16 bit value for the UBRR register
  * \returns No return value
  */
-void UART_init(uint16_t ubrr);
+void UART_init(uint16_t);
 
 /**
  * \brief Deactivate the UART
@@ -71,31 +80,33 @@ void UART_enable(void);
  * \param char c: The character to be sent
  * \returns No return value
  */
-void UART_putc(char c);
+void UART_putc(char);
 
 /**
  * \brief Output a string on the UART
  * \param char *s: pointer to string to be sent
  * \returns No return value
  */
-void UART_puts(char *s);
+void UART_puts(char *);
 
 /**
  * \brief Output a formatted 16 bit integer on the UART
  * \param uint16_t d: Value to be sent
  * \returns No return value
  */
-void UART_putd(int16_t d);
-
+void UART_putd(int16_t);
 void UART_putd_32(int32_t);
-
-void UART_puth(int16_t d);
-
+//void UART_puth(int16_t d);
 void UART_clear_screen(void);
 
-void UART_print_ubrr_vals(void);
+void uart_kickout(void);
+void uart_buffer_write_string(char *);
+void uart_buffer_write_int(int);
 
+void UART_print_ubrr_vals(void);
 void UART_main_test(void);
 
+void int2str_10(int, char*);
+void long2str_10(long, char*);
 
 #endif /*UART_H_*/

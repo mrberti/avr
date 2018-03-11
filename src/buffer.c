@@ -56,7 +56,7 @@ buffer_result_t buffer_write(buffer_t *buf, void *val)
   if(used > index_max)
   {
     buf->flags &= ~BUFFER_FLAG_LOCK;
-#if UART_DEBUG_LEVEL >= UART_DEBUG_LEVEL_WARNING
+#if UART_DEBUG_LEVEL >= UART_DEBUG_LEVEL_NOTICE
     UART_puts("\n\r");
     UART_putd_32(timer0_us_since_start);
     UART_puts(" W: BUFFER_FULL");
@@ -111,7 +111,7 @@ buffer_result_t buffer_read(buffer_t *buf, void *val)
   if(used == 0)
   {
     buf->flags &= ~BUFFER_FLAG_LOCK;
-#if UART_DEBUG_LEVEL >= UART_DEBUG_LEVEL_WARNING
+#if UART_DEBUG_LEVEL >= UART_DEBUG_LEVEL_NOTICE
     UART_puts("\n\r");
     UART_putd_32(timer0_us_since_start);
     UART_puts(" R: BUFFER_EMPTY");
