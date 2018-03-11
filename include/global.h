@@ -24,7 +24,7 @@ extern volatile uint8_t event_flags;
 #define SET_EVF(flag)   (event_flags |=  (flag))
 #define RESET_EVF()     (event_flags = 0)
 
-#define TIMER0_TICK_RESOLUTION_US 100
+#define TIMER0_TICK_RESOLUTION_US 200
 #define MAIN_LOOP_TIME_US (1000)
 #define ADC_LOOP_TIME_US  (100000)
 

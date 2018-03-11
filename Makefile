@@ -11,8 +11,8 @@ AVRDUDE_PORT = usb
 OPTLEVEL = 2
 
 # Define disassembler flags
-LSSFLAGS = -S # -d or -S
-#LSSFLAGS = -d
+#LSSFLAGS = -S # -d or -S
+LSSFLAGS = -d
 
 # Set debug information
 DEBUG = dwarf-2

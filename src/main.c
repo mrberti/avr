@@ -304,13 +304,15 @@ void uart_buffered_test()
 	long i = 0;
 	while(1)
 	{
+		/*
+		UART_puts("\n\r");
+		UART_putd_32(timer0_us_since_start);
+		*/
 		uart_buffer_write_string("\n\r");
 		uart_buffer_write_long(timer0_us_since_start);
-		uart_buffer_write_string("\t");
-		uart_buffer_write_long(i);
 
 		i = 1;
-
+/*
 		if(buf_uart_rx.used >= 0)
 		{
 			while(buf_uart_rx.used > 0)
@@ -319,9 +321,10 @@ void uart_buffered_test()
 				UART_putc(temp);
 			}
 		}
+*/
 		PORTD ^= LED_ALIVE;
 
-		uart_kickout();
-		_delay_ms(2);
+		//uart_kickout();
+		//_delay_ms(2);
 	}
 }
