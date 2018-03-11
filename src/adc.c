@@ -12,21 +12,21 @@ BUFFER_DECLARE(buf_adc,int,ADC_BUFFERSIZE);
 
 void ADC_init()
 {
+  /* Initialize the ADC buffer */
+  BUFFER_INIT(buf_adc,int,ADC_BUFFERSIZE);
+
   ADMUX =   ADC_REF_SEL \
           | ADC_ADJUST;
   ADCSRA =  ADC_ENABLE \
           | ADC_PRESCALER \
-          | ADC_INTERRUPT;
+          | ADC_INTERRUPT_DISABLE;
 
   /* After enabling the ADC throw away the first few samples to let the ADC
      stabilize */
-  /* TODO: This step seems to be victim to optimization */
-  /*for(uint8_t i = 1;i<10;i++)
+  for(uint8_t i = 1;i<10;i++)
     ADC_single_shot(ADC_MUX_0V);
-    */
 
-  /* Initialize the ADC buffer */
-  BUFFER_INIT(buf_adc,int,ADC_BUFFERSIZE);
+  ADCSRA |= ADC_INTERRUPT;
 }
 
 void ADC_set_running()
@@ -58,7 +58,7 @@ void ADC_start_conversion(uint8_t adc_chan)
   /* As the results will be read from the interrupt, they must be enabled before
   calling this function */
   PORTD |= LED_ADC;
-#ifdef UART_DEBUG
+#if UART_DEBUG_LEVEL >= UART_DEBUG_LEVEL_NOTICE
   UART_puts("\n\r");
   UART_putd_32(timer0_us_since_start);
   UART_puts(" ADC: START CONV. CH = ");
@@ -82,6 +82,19 @@ ADC_t ADC_single_shot_timestamp(uint8_t adc_chan)
   return adc_val;
 }
 
+/* write function for ADC specific data type */
+inline write_type(ADC_t)
+{
+  (*(ADC_t*)(data+index*sizeof(ADC_t))).val = (*(ADC_t*)val).val;
+  (*(ADC_t*)(data+index*sizeof(ADC_t))).timestamp = (*(ADC_t*)val).timestamp;
+}
+/* read function for ADC specific data type */
+inline read_type(ADC_t)
+{
+  (*(ADC_t*)val).val = (*(ADC_t*)(data+index*sizeof(ADC_t))).val;
+  (*(ADC_t*)val).timestamp = (*(ADC_t*)(data+index*sizeof(ADC_t))).timestamp;
+}
+
 #ifdef ADC_USE_INTERRUPTS
 #ifndef DISABLE_INTERRUPT_COMPILE
 int adc_val = 0;
@@ -90,7 +103,7 @@ ISR(ADC_vect)
   SET_EVF(EVF_ADC_CONV_FINISHED);
   //ADC_val_t adc_vaLED_YELLOWl = ADC_CONVERSION_REG;
   adc_val = ADC_CONVERSION_REG;
-#ifdef UART_DEBUG
+#if UART_DEBUG_LEVEL >= UART_DEBUG_LEVEL_NOTICE
   UART_puts("\n\r");
   UART_putd_32(timer0_us_since_start);
   UART_puts(" ADC: CONV FINISHED. val = ");

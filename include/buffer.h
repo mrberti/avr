@@ -28,12 +28,11 @@ typedef struct buffer_s {
   void (*read_func)(void *data, buffer_index_t index, void *val);
 } buffer_t;
 
-#define write_type(type) void write_##type(void *data, buffer_index_t index, void *val)
-#define read_type(type) void read_##type(void *data, buffer_index_t index, void *val)
-
 /*
  * FUNCTION DECLARATIONS
  */
+#define write_type(type) void write_##type(void *data, buffer_index_t index, void *val)
+#define read_type(type) void read_##type(void *data, buffer_index_t index, void *val)
 buffer_result_t buffer_write(buffer_t *buf, void *val);
 buffer_result_t buffer_read(buffer_t *buf, void *val);
 /* The following functions define type specific read and write access */
@@ -43,7 +42,6 @@ write_type(long);
 read_type(char);
 read_type(int);
 read_type(long);
-
 
 #define BUFFER_DECLARE(buf_name,data_type,buf_size) \
 	typedef data_type buf_name##_type_t; \

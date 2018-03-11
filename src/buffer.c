@@ -1,36 +1,36 @@
 #include "buffer.h"
 
-#ifdef UART_DEBUG
+#if UART_DEBUG_LEVEL > UART_DEBUG_LEVEL_NONE
 # include "uart.h"
 # include "timer.h"
 #endif
 
-write_type(char)
+inline write_type(char)
 {
   *(char*)(data+index*sizeof(char)) = *(char*)val;
 }
 
-write_type(int)
+inline write_type(int)
 {
   *(int*)(data+index*sizeof(int)) = *(int*)val;
 }
 
-write_type(long)
+inline write_type(long)
 {
   *(long*)(data+index*sizeof(long)) = *(long*)val;
 }
 
-read_type(char)
+inline read_type(char)
 {
   *(char*)val = *(char*)(data+index*sizeof(char));
 }
 
-read_type(int)
+inline read_type(int)
 {
   *(int*)val = *(int*)(data+index*sizeof(int));
 }
 
-read_type(long)
+inline read_type(long)
 {
   *(long*)val = *(long*)(data+index*sizeof(long));
 }
@@ -40,7 +40,7 @@ buffer_result_t buffer_write(buffer_t *buf, void *val)
   /* At first it must be checked if the buffer is locked */
   if(buf->flags & BUFFER_FLAG_LOCK)
   {
-#ifdef UART_DEBUG
+#if UART_DEBUG_LEVEL >= UART_DEBUG_LEVEL_WARNING
     UART_puts("\n\r");
     UART_putd_32(timer0_us_since_start);
     UART_puts(" W: BUFFER_LOCKED");
@@ -56,7 +56,7 @@ buffer_result_t buffer_write(buffer_t *buf, void *val)
   if(used > index_max)
   {
     buf->flags &= ~BUFFER_FLAG_LOCK;
-#ifdef UART_DEBUG
+#if UART_DEBUG_LEVEL >= UART_DEBUG_LEVEL_WARNING
     UART_puts("\n\r");
     UART_putd_32(timer0_us_since_start);
     UART_puts(" W: BUFFER_FULL");
@@ -78,7 +78,7 @@ buffer_result_t buffer_write(buffer_t *buf, void *val)
   buf->index_w = index_w;
   buf->used    = used;
   buf->flags  &= ~BUFFER_FLAG_LOCK;
-#ifdef UART_DEBUG
+#if UART_DEBUG_LEVEL >= UART_DEBUG_LEVEL_NOTICE
     UART_puts("\n\r");
     UART_putd_32(timer0_us_since_start);
     UART_puts(" W: OK. used: ");
@@ -96,7 +96,7 @@ buffer_result_t buffer_read(buffer_t *buf, void *val)
   /* At first it must be checked if the buffer is locked */
   if(buf->flags & BUFFER_FLAG_LOCK)
   {
-#ifdef UART_DEBUG
+#if UART_DEBUG_LEVEL >= UART_DEBUG_LEVEL_WARNING
     UART_puts("\n\r");
     UART_putd_32(timer0_us_since_start);
     UART_puts(" R: BUFFER_LOCKED");
@@ -111,7 +111,7 @@ buffer_result_t buffer_read(buffer_t *buf, void *val)
   if(used == 0)
   {
     buf->flags &= ~BUFFER_FLAG_LOCK;
-#ifdef UART_DEBUG
+#if UART_DEBUG_LEVEL >= UART_DEBUG_LEVEL_WARNING
     UART_puts("\n\r");
     UART_putd_32(timer0_us_since_start);
     UART_puts(" R: BUFFER_EMPTY");
@@ -134,7 +134,7 @@ buffer_result_t buffer_read(buffer_t *buf, void *val)
   buf->index_r = index_r;
   buf->used    = used;
   buf->flags  &= ~BUFFER_FLAG_LOCK;
-#ifdef UART_DEBUG
+#if UART_DEBUG_LEVEL >= UART_DEBUG_LEVEL_NOTICE
     UART_puts("\n\r");
     UART_putd_32(timer0_us_since_start);
     UART_puts(" R: OK. used: ");

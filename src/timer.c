@@ -3,16 +3,11 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-#include "uart.h"
-#include "adc.h"
-
 /**
  * GLOBAL VARIABLE INITIALIZATION
  */
 volatile uint32_t timer0_us_since_start = 0;
 volatile uint32_t timer0_ms_since_start = 0;
-volatile uint8_t timer0_ms_flag = 0;
-volatile uint8_t timer0_adc_flag = 0;
 
 /**
  * FUNCTION IMPLEMENTATION
@@ -110,7 +105,7 @@ ISR(TIMER0_COMPA_vect)
 {
   PORTD |= LED_TIMER0;
   static uint16_t us_1ms = 0;
-  static uint16_t us_adc = 0;
+  static uint32_t us_adc = 0;
   static uint16_t us_main_loop = 0;
 
   timer0_us_since_start += TIMER0_US_PER_TICK;

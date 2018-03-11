@@ -28,7 +28,7 @@ int main(void)
 	UART_init(UART_UBRR_500k);
 	UART_enable();
 	UART_clear_screen();
-	UART_puts("\
+	UART_puts("\n\r\
 UART_initialized\n\r\
 \n\r");
 
@@ -237,37 +237,57 @@ void buffer_test2()
 	timer0_start();
 	ADC_init();
 
+	BUFFER_DECLARE_AND_INIT(adct,ADC_t,8);
+	ADC_t test;
+	ADC_val_t x;
+
 	//buffer_result_t buf_result;
 	int temp;
+	x = 0;
 
 	while(1)
 	{
+		x += 1;
 
 		if(EVF_IS_SET(EVF_START_ADC))
 		{
 			ADC_start_conversion(ADC_MUX_ADC0);
 			CLEAR_EVF(EVF_START_ADC);
 		}
-/*
-		if(EVF_IS_SET(EVF_ADC_CONV_FINISHED))
+
+		if(EVF_IS_SET(EVF_TIMER0_MAIN_LOOP_WAIT_FINISHED))
 		{
-			//temp = ADC_get_conversion();
-			buffer_read(&buf_adc, &temp);
-			UART_puts("\r\n");
-			UART_putd_32(timer0_us_since_start);
-			UART_puts("\t");
-			UART_putd(temp);
-			CLEAR_EVF(EVF_ADC_CONV_FINISHED);
-		}
-*/
-		ADC_single_shot(0);
-		if(buf_adc.used > 4)
-		{
-			buffer_read(&buf_adc, &temp);
-			UART_puts("\n\rADC = ");
-			UART_putd(temp);
+			test.timestamp = timer0_us_since_start;
+			test.val = ADC_single_shot(0);
+			buffer_write(&adct,&test);
+			CLEAR_EVF(EVF_TIMER0_MAIN_LOOP_WAIT_FINISHED);
 		}
 
+		if(adct.used > 4)
+		{
+			while(adct.used > 0)
+			{
+				buffer_read(&adct, &test);
+				UART_puts("\n\r");
+				UART_putd_32(test.timestamp);
+				UART_puts(": ");
+				UART_putd(test.val);
+				UART_puts(" buffer used = ");
+				UART_putd(adct.used);
+			}
+		}
+
+		if(buf_adc.used > 4)
+		{
+			while(buf_adc.used > 0)
+			{
+				buffer_read(&buf_adc, &temp);
+				UART_puts("\n\rADC = ");
+				UART_putd(temp);
+				UART_puts(" buffer used = ");
+				UART_putd(buf_adc.used);
+			}
+		}
 		PORTD ^= LED_ALIVE;
 		//_delay_ms(500);
 	}

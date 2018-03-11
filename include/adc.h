@@ -144,4 +144,8 @@ ADC_val_t ADC_get_conversion(void);
 ADC_val_t ADC_single_shot(uint8_t adc_chan);
 ADC_t ADC_single_shot_timestamp(uint8_t adc_chan);
 
+/* For buffer */
+write_type(ADC_t);
+read_type(ADC_t);
+
 #endif //ADC_H
