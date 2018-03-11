@@ -310,8 +310,10 @@ void uart_buffered_test()
 		*/
 		uart_buffer_write_string("\n\r");
 		uart_buffer_write_long(timer0_us_since_start);
+		uart_buffer_write_string(" ");
+		uart_buffer_write_int(i);
 
-		i = 1;
+		i += 1;
 /*
 		if(buf_uart_rx.used >= 0)
 		{
