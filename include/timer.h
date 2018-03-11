@@ -94,6 +94,11 @@
 # define TIMER0_OCRA_VAL    (199)
 # define TIMER0_CLK_DIV_VAL (8)
 # define TIMER0_CLK_DIV     (TIMER0_CLK_DIV_8)
+/* 200 us resolution timer: OCRA=49,  CLKDIV=64*/
+#elif TIMER0_TICK_RESOLUTION_US == 200
+# define TIMER0_OCRA_VAL    (49)
+# define TIMER0_CLK_DIV_VAL (64)
+# define TIMER0_CLK_DIV     (TIMER0_CLK_DIV_64)
 /* 1 ms resolution timer: OCRA=249,  CLKDIV=64*/
 #elif TIMER0_TICK_RESOLUTION_US == 1000
 # define TIMER0_OCRA_VAL (249)
