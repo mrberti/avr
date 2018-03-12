@@ -2,6 +2,7 @@
 #include "global.h"
 #include "timer.h"
 #include "buffer.h"
+#include "events.h"
 
 #include <stdint.h>
 #include <avr/io.h>

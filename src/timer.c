@@ -1,4 +1,5 @@
 #include "timer.h"
+#include "events.h"
 
 #include <avr/io.h>
 #include <avr/interrupt.h>

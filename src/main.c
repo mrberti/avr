@@ -3,6 +3,7 @@
 #include "timer.h"
 #include "adc.h"
 #include "buffer.h"
+#include "events.h"
 
 #include <avr/io.h>
 #include <avr/interrupt.h>

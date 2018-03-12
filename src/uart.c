@@ -1,4 +1,5 @@
 #include "uart.h"
+#include "events.h"
 
 #include <stdint.h>
 #include <avr/io.h>
