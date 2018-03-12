@@ -17,26 +17,28 @@ extern volatile uint8_t event_flags;
 #define EVF_START_ADC                      (1<<0)
 #define EVF_ADC_CONV_FINISHED              (1<<1)
 #define EVF_TIMER0_1MS_PASSED              (1<<2)
-#define EVF_TIMER0_MAIN_LOOP_WAIT_FINISHED (1<<3)
+#define EVF_MAIN_LOOP_WAIT_FINISHED        (1<<3)
+#define EVF_UART_BUFFER_TX_FINISHED        (1<<4)
 
-#define EVF_IS_SET(flag)   (event_flags  &  (flag))
-#define CLEAR_EVF(flag) (event_flags &= ~(flag))
-#define SET_EVF(flag)   (event_flags |=  (flag))
-#define RESET_EVF()     (event_flags = 0)
+#define EVF_IS_SET(flag) (event_flags  &  (flag))
+#define CLEAR_EVF(flag)  (event_flags &= ~(flag))
+#define SET_EVF(flag)    (event_flags |=  (flag))
+#define RESET_EVF()      (event_flags = 0)
 
-#define TIMER0_TICK_RESOLUTION_US 200
-#define MAIN_LOOP_TIME_US (1000)
-#define ADC_LOOP_TIME_US  (100000)
+#define TIMER0_TICK_RESOLUTION_US (100)
+#define MAIN_LOOP_TIME_US         (10000)
+#define ADC_LOOP_TIME_US          (10000)
 
 #define LED_RED    (1<<PD2)
 #define LED_YELLOW (1<<PD3)
 #define LED_GREEN  (1<<PD4)
 #define LED_BOARD  (1<<PB0)
 
-#define LED_ALIVE  (LED_RED)
-#define LED_TIMER0 (LED_YELLOW)
-#define LED_ADC    (LED_GREEN)
-#define LED_UART   (LED_GREEN)
+#define LED_ALIVE   (LED_RED)
+#define LED_TIMER0  (LED_YELLOW)
+#define LED_ADC     (LED_GREEN)
+#define LED_UART_RX (LED_RED)
+#define LED_UART_TX (LED_GREEN)
 
 #define UART_DEBUG_LEVEL_NONE    0
 #define UART_DEBUG_LEVEL_ERROR   1
