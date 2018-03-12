@@ -49,6 +49,7 @@ void main_loop1()
 	timer0_start();
 	ADC_init();
 
+	sei();
 
 	#define ADCs 3
 	uint8_t adc_chan = 0;
@@ -108,6 +109,7 @@ void main_loop2()
 	timer0_init();
 	timer0_start();
 	ADC_init();
+	sei();
 	#define ADCs 3
 	uint8_t adc_chan = 0;
 	ADC_val_t vals[ADCs];
@@ -178,6 +180,7 @@ void buffer_test1()
 	timer0_init();
 	timer0_start();
 	ADC_init();
+	sei();
 
 #define BUF_LOCAL_SIZE	8
 
@@ -238,6 +241,7 @@ void buffer_test2()
 	timer0_init();
 	timer0_start();
 	ADC_init();
+	sei();
 
 	BUFFER_DECLARE_AND_INIT(adct,ADC_t,8);
 	ADC_t test;

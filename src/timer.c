@@ -42,7 +42,8 @@ void timer0_start()
   /* TODO: Save previous state of TCCR0B*/
   TCCR0B = TIMER0_CLK_DIV;
   /* Interrupts are required to be on so that the timer can run */
-  sei();
+  /* Interrupts should be set from outside... */
+  //sei();
 }
 
 void timer0_stop()
