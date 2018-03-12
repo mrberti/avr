@@ -7,16 +7,26 @@
  * \author	Simon Bertling
  */
 #include "global.h"
-#include "buffer.h"
-#include <inttypes.h>
+#include <stdint.h>
 
 /*
  * UART configuration
  */
-#define UART_BUF_RX_SIZE  80
-#define UART_BUF_TX_SIZE  80
-extern buffer_t buf_uart_rx;
-extern buffer_t buf_uart_tx;
+#define UART_BUFFER_RX_SIZE (80)
+#define UART_BUFFER_TX_SIZE (80)
+
+typedef struct uart_buffer_s {
+  char* data;
+  volatile uint8_t index_w;
+  volatile uint8_t index_r;
+  volatile uint8_t used;
+  uint8_t index_max;
+} uart_buffer_t;
+
+extern uart_buffer_t uart_buffer_rx;
+extern uart_buffer_t uart_buffer_tx;
+extern char uart_buffer_rx_data[UART_BUFFER_RX_SIZE];
+extern char uart_buffer_tx_data[UART_BUFFER_TX_SIZE];
 
 /**
  * Macros for calculating the UBBR values.
@@ -99,14 +109,24 @@ void UART_putd_32(int32_t);
 //void UART_puth(int16_t d);
 void UART_clear_screen(void);
 
-void uart_kickout(void);
-void uart_buffer_write_string(char *);
-void uart_buffer_write_int(int);
+void uart_buffer_write(uart_buffer_t *buf, char c);
+char uart_buffer_read(uart_buffer_t *buf);
+void uart_buffer_dump_data(uart_buffer_t *buf);
+void uart_buffer_write_int(uart_buffer_t *buf, int i);
+void uart_buffer_write_long(uart_buffer_t *buf, long i);
+void uart_buffer_write_string(uart_buffer_t *buf, char *s);
 
 void UART_print_ubrr_vals(void);
-void UART_main_test(void);
 
 void int2str_10(int, char*);
 void long2str_10(long, char*);
+
+#define uart_kickout()          (UCSR0B |= (1<<UDRIE0))
+#define uart_start_listen()     (UCSR0B |= (1<<RXCIE0))
+#define uart_stop_tx()          (UCSR0B &= ~(1<<UDRIE0))
+#define uart_stop_rx()          (UCSR0B &= ~(1<<RXCIE0))
+#define uart_is_transmitting()  (!(UCSR0A & (1<<UDRE0)))
+#define uart_transmit_enabled() ((UCSR0B & (1<<UDRIE0)))
+#define uart_receive_enabled()  (UCSR0B & (1<<RXCIE0))
 
 #endif /*UART_H_*/

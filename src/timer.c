@@ -103,23 +103,26 @@ ISR(TIMER0_OVF_vect)
 
 ISR(TIMER0_COMPA_vect)
 {
+  /*
+  TODO: Improvement ideas:
+  - Use tick counter instead of re-calculating each timer step.
+  The multiplication to get the actual us/ms values could be done in a slower
+  task.
+  - Use defines to enable or disable the corresponding timer flags
+  */
   PORTD |= LED_TIMER0;
-  static uint16_t us_1ms = 0;
-  static uint32_t us_adc = 0;
-  static uint16_t us_main_loop = 0;
-
   timer0_us_since_start += TIMER0_US_PER_TICK;
 
-  us_1ms = us_1ms+TIMER0_US_PER_TICK;
-  us_adc = us_adc+TIMER0_US_PER_TICK;
+  static uint16_t us_main_loop = 0;
   us_main_loop = us_main_loop+TIMER0_US_PER_TICK;
-
   if(us_main_loop >= MAIN_LOOP_TIME_US)
   {
-    SET_EVF(EVF_TIMER0_MAIN_LOOP_WAIT_FINISHED);
+    SET_EVF(EVF_MAIN_LOOP_WAIT_FINISHED);
     us_main_loop = 0;
   }
 
+  static uint16_t us_1ms = 0;
+  us_1ms = us_1ms+TIMER0_US_PER_TICK;
   if(us_1ms>=1000)
   {
     SET_EVF(EVF_TIMER0_1MS_PASSED);
@@ -127,11 +130,14 @@ ISR(TIMER0_COMPA_vect)
     us_1ms = 0;
   }
 
+  static uint16_t us_adc = 0;
+  us_adc = us_adc+TIMER0_US_PER_TICK;
   if(us_adc>=ADC_LOOP_TIME_US)
   {
     SET_EVF(EVF_START_ADC);
     us_adc = 0;
   }
+
   PORTD &= ~LED_TIMER0;
 }
 

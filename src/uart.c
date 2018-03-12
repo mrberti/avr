@@ -1,19 +1,22 @@
 #include "uart.h"
-#include "buffer.h"
 
-#include <inttypes.h>
+#include <stdint.h>
 #include <avr/io.h>
-//#include <stdlib.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 
-BUFFER_DECLARE(buf_uart_rx,char,UART_BUF_RX_SIZE);
-BUFFER_DECLARE(buf_uart_tx,char,UART_BUF_TX_SIZE);
+uart_buffer_t uart_buffer_rx;
+uart_buffer_t uart_buffer_tx;
+
+char uart_buffer_rx_data[UART_BUFFER_RX_SIZE];
+char uart_buffer_tx_data[UART_BUFFER_TX_SIZE];
+
+static void uart_buffer_init(uart_buffer_t *buf, char *data, uint8_t size);
 
 void UART_init(uint16_t ubrr)
 {
-	BUFFER_INIT(buf_uart_rx,char,UART_BUF_RX_SIZE);
-	BUFFER_INIT(buf_uart_tx,char,UART_BUF_TX_SIZE);
+	uart_buffer_init(&uart_buffer_rx, uart_buffer_rx_data, UART_BUFFER_RX_SIZE);
+	uart_buffer_init(&uart_buffer_tx, uart_buffer_tx_data, UART_BUFFER_TX_SIZE);
 
 	/* set baud rate */
 	UBRR0H = (unsigned char)(ubrr>>8);
@@ -21,25 +24,24 @@ void UART_init(uint16_t ubrr)
 
 	/* Set frame format: 8data, 0stop bit */
 	UCSR0C |= (3<<UCSZ00);
-
-	/* Enable interrupts */
-	UCSR0B = (1<<RXCIE0);
 }
 
 void UART_disable(void)
 {
-	UCSR0B &= ~(1<<TXEN0);
+	UCSR0B &= ~((1<<TXEN0) | (1<<RXEN0));
 }
 
 void UART_enable(void)
 {
 	UCSR0B |= (1<<TXEN0) | (1<<RXEN0);
+	/* Enable interrupts */
+	uart_start_listen();
 }
 
 void UART_putc(char c)
 {
 	/* Blocking wait for the UART to be ready*/
-	while(!(UCSR0A & (1<<UDRE0)));
+	while(uart_is_transmitting());
 	UDR0 = c;
 }
 
@@ -63,17 +65,8 @@ void UART_putd_32(int32_t val)
 {
 	char s[11];
 	long2str_10(val, s);
-	//ltoa(val, s, 10);
 	UART_puts(s);
 }
-/*
-void UART_puth(int16_t d)
-{
-	char s[7];
-	itoa(d, s, 16);
-	UART_puts(s);
-}
-*/
 
 void UART_clear_screen()
 {
@@ -112,66 +105,151 @@ void UART_print_ubrr_vals()
 	UART_puts("\n\r");
 }
 
-void UART_main_test()
+static void uart_buffer_init(uart_buffer_t *buf, char *data, uint8_t size)
 {
-	UART_init(UART_UBRR_500k);
-	UART_enable();
-	UART_print_ubrr_vals();
+	buf->data = data;
+	buf->index_w = 0;
+	buf->index_r = 0;
+	buf->index_max = size-1;
+	buf->used = 0;
+	for(uint8_t i = 0; i < size; i++)
+	{
+		buf->data[i] = '#';
+	}
 }
 
-void uart_kickout()
+void uart_buffer_write(uart_buffer_t *buf, char c)
 {
-	UCSR0B |= (1<<UDRIE0);
+	/* ATTENTION: No buffer access check is done here!
+	The user is responsible to prevent racing conditions!*/
+	buf->data[buf->index_w++] = c;
+	if(buf->index_w > buf->index_max)
+		buf->index_w = 0;
+	buf->used++;
+}
+
+char uart_buffer_read(uart_buffer_t *buf)
+{
+	/* ATTENTION: No buffer access check is done here!
+	The user is responsible to prevent racing conditions!*/
+	char c = buf->data[buf->index_r++];
+	if(buf->index_r > buf->index_max)
+		buf->index_r = 0;
+	buf->used--;
+	return c;
+}
+
+void uart_buffer_write_int(uart_buffer_t *buf, int i)
+{
+	char s[7];
+	int2str_10(i,s);
+	uart_buffer_write_string(buf, s);
+}
+
+void uart_buffer_write_long(uart_buffer_t *buf, long i)
+{
+	char s[12];
+	long2str_10(i,s);
+	uart_buffer_write_string(buf, s);
+}
+
+void uart_buffer_write_string(uart_buffer_t *buf, char *s)
+{
+	while(*s != 0)
+	{
+		uart_buffer_write(buf,*s);
+		s++;
+	}
+}
+
+void uart_buffer_dump_data(uart_buffer_t *buf)
+{
+	UART_puts("\n\r++dump start++\n\r");
+	for(uint8_t i = 0; i < buf->index_max+1; i++)
+	{
+		UART_putc(uart_buffer_tx_data[i]);
+	}
+	UART_puts("\n\r--dump end--\n\r");
+}
+
+ISR(USART_RX_vect)
+{
+	PORTD ^= LED_UART_RX;
+	uart_buffer_write(&uart_buffer_rx, UDR0);
+}
+
+ISR(USART_UDRE_vect)
+{
+	PORTD |= LED_UART_TX;
+	if(uart_buffer_tx.used == 0)
+	{
+		SET_EVF(EVF_UART_BUFFER_TX_FINISHED);
+		uart_stop_tx();
+	}
+	else
+	{
+		UDR0 = uart_buffer_read(&uart_buffer_tx);
+	}
+	PORTD &= ~LED_UART_TX;
+}
+
+ISR(USART_TX_vect)
+{
+	PORTD ^= LED_RED;
 }
 
 const long divs[] PROGMEM = {1000000000, 100000000, 10000000, 1000000, 100000, 10000, 1000, 100, 10, 1};
 
 void int2str_10(int val, char* s)
 {
- 		const uint8_t divs_n = 5;
-		const uint8_t divs_n_start = 5;
-		//const int divs[] = {10000, 1000, 100, 10, 1};
-		int div;
-		uint8_t skip_leading_zeros = 1;
+	/*
+	TODO: Improvement ideas
+	- Put this function into another file
+	- There are some black magic tricks where using assembler might shorten the
+	conversion from binary to 10 base string much faster
+	- The '0' is always aligned left
+	*/
+	const uint8_t divs_n = 5;
+	const uint8_t divs_n_start = 5;
+	int div;
+	uint8_t skip_leading_zeros = 1;
 
-		if(val == 0)
+	if(val == 0)
+	{
+		*s = '0';
+		*(s+1) = 0;
+		return;
+	}
+	if(val < 0)
+	{
+		val = -val;
+		*s = '-';
+		s++;
+	}
+	for(uint8_t i = divs_n_start; i < divs_n+divs_n_start; i++)
+	{
+		div = pgm_read_word(&divs[i]);
+		if(div>val && skip_leading_zeros == 1)
 		{
-			*s = '0';
-			*(s+1) = 0;
-			return;
+			//*s = ' ';
+			//s++;
+			continue;
 		}
-		if(val < 0)
+		skip_leading_zeros = 0;
+		*s = '0';
+		while(val>=div)
 		{
-			val = -val;
-			*s = '-';
-			s++;
+			val -= div;
+			*s += 1;
 		}
-		for(uint8_t i = divs_n_start; i < divs_n+divs_n_start; i++)
-		{
-			div = pgm_read_word(&divs[i]);
-			//div = divs[i];
-			if(div>val && skip_leading_zeros == 1)
-			{
-				*s = ' ';
-				s++;
-				continue;
-			}
-			skip_leading_zeros = 0;
-			*s = '0';
-			while(val>=div)
-			{
-				val -= div;
-				*s += 1;
-			}
-			s++;
-		}
-		*s = 0;
+		s++;
+	}
+	*s = 0;
 }
 
 void long2str_10(long val, char* s)
 {
  		const uint8_t divs_n = 10;
-		//const long divs[] = {1000000000, 100000000, 10000000, 1000000, 100000, 10000, 1000, 100, 10, 1};
 		long div;
 		uint8_t skip_leading_zeros = 1;
 
@@ -189,12 +267,11 @@ void long2str_10(long val, char* s)
 		}
 		for(uint8_t i = 0; i < divs_n; i++)
 		{
-			//div = divs[i];
 			div = pgm_read_dword(&divs[i]);
 			if(div>val && skip_leading_zeros == 1)
 			{
-				*s = ' ';
-				s++;
+				//*s = ' ';
+				//s++;
 				continue;
 			}
 			skip_leading_zeros = 0;
@@ -207,61 +284,4 @@ void long2str_10(long val, char* s)
 			s++;
 		}
 		*s = 0;
-}
-
-void uart_buffer_write_int(int i)
-{
-	char s[7];
-	int2str_10(i,s);
-	uart_buffer_write_string(s);
-}
-
-void uart_buffer_write_long(long i)
-{
-	char s[12];
-	long2str_10(i,s);
-	uart_buffer_write_string(s);
-}
-
-void uart_buffer_write_string(char *s)
-{
-	/* TODO: Implement buffer error checking */
-	while(*s != 0)
-	{
-		if(buffer_write(&buf_uart_tx,s) == BUFFER_FULL)
-			return;
-		s++;
-	}
-	uart_kickout();
-}
-
-ISR(USART_RX_vect)
-{
-	PORTD ^= LED_GREEN;
-	char udr0 = UDR0;
-	buffer_write(&buf_uart_rx,&udr0);
-}
-
-ISR(USART_UDRE_vect)
-{
-	PORTD |= LED_YELLOW;
-	char rx_out;
-	buffer_result_t buf_result;
-	buf_result = buffer_read(&buf_uart_tx,&rx_out);
-	switch(buf_result){
-		case BUFFER_EMPTY:
-			UCSR0B &= ~(1<<UDRIE0);
-			break;
-		case BUFFER_LOCKED:
-			break;
-		case BUFFER_SUCCESS:
-			UDR0 = rx_out;
-			break;
-	}
-	PORTD &= ~LED_YELLOW;
-}
-
-ISR(USART_TX_vect)
-{
-	PORTD ^= LED_RED;
 }

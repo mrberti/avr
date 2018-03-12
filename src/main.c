@@ -96,9 +96,9 @@ void main_loop1()
 			CLEAR_EVF(EVF_TIMER0_1MS_PASSED);
 		}
 
-		if(EVF_IS_SET(EVF_TIMER0_MAIN_LOOP_WAIT_FINISHED))
+		if(EVF_IS_SET(EVF_MAIN_LOOP_WAIT_FINISHED))
 		{
-			CLEAR_EVF(EVF_TIMER0_MAIN_LOOP_WAIT_FINISHED);
+			CLEAR_EVF(EVF_MAIN_LOOP_WAIT_FINISHED);
 		}
 	}
 }
@@ -155,9 +155,9 @@ void main_loop2()
 			CLEAR_EVF(EVF_TIMER0_1MS_PASSED);
 		}
 
-		if(EVF_IS_SET(EVF_TIMER0_MAIN_LOOP_WAIT_FINISHED))
+		if(EVF_IS_SET(EVF_MAIN_LOOP_WAIT_FINISHED))
 		{
-			CLEAR_EVF(EVF_TIMER0_MAIN_LOOP_WAIT_FINISHED);
+			CLEAR_EVF(EVF_MAIN_LOOP_WAIT_FINISHED);
 		}
 
 		/* Measure task times */
@@ -257,12 +257,12 @@ void buffer_test2()
 			CLEAR_EVF(EVF_START_ADC);
 		}
 
-		if(EVF_IS_SET(EVF_TIMER0_MAIN_LOOP_WAIT_FINISHED))
+		if(EVF_IS_SET(EVF_MAIN_LOOP_WAIT_FINISHED))
 		{
 			test.timestamp = timer0_us_since_start;
 			test.val = ADC_single_shot(0);
 			buffer_write(&adct,&test);
-			CLEAR_EVF(EVF_TIMER0_MAIN_LOOP_WAIT_FINISHED);
+			CLEAR_EVF(EVF_MAIN_LOOP_WAIT_FINISHED);
 		}
 
 		if(adct.used > 4)
@@ -300,33 +300,27 @@ void uart_buffered_test()
 	timer0_init();
 	timer0_start();
 	sei();
-	char temp;
-	long i = 0;
+	int temp = 0;
+	char c = 0;
 	while(1)
 	{
-		/*
-		UART_puts("\n\r");
-		UART_putd_32(timer0_us_since_start);
-		*/
-		uart_buffer_write_string("\n\r");
-		uart_buffer_write_long(timer0_us_since_start);
-		uart_buffer_write_string(" ");
-		uart_buffer_write_int(i);
-
-		i += 1;
-/*
-		if(buf_uart_rx.used >= 0)
+		if(EVF_IS_SET(EVF_MAIN_LOOP_WAIT_FINISHED))
 		{
-			while(buf_uart_rx.used > 0)
+			uart_buffer_write_string(&uart_buffer_tx, "\n\r");
+			uart_buffer_write_long(&uart_buffer_tx, timer0_us_since_start);
+			uart_buffer_write_string(&uart_buffer_tx, " ");
+			while(uart_buffer_rx.used > 0)
 			{
-				buffer_read(&buf_uart_rx,&temp);
-				UART_putc(temp);
+				c = uart_buffer_read(&uart_buffer_rx);
+				uart_buffer_write(&uart_buffer_tx, c);
 			}
+			uart_kickout();
+			while(uart_transmit_enabled());
+			uart_buffer_write_long(&uart_buffer_tx, timer0_us_since_start);
+			CLEAR_EVF(EVF_MAIN_LOOP_WAIT_FINISHED);
 		}
-*/
-		PORTD ^= LED_ALIVE;
 
-		//uart_kickout();
-		//_delay_ms(2);
+		temp += 1;
+		PORTB ^= (1<<PB5);
 	}
 }
