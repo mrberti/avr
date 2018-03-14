@@ -40,6 +40,7 @@
 /*
  * TCCR0B
  */
+#define TIMER0_CLK_DIV_MASK           (7<<CS00)
 #define TIMER0_CLK_DIV_STOP           (0<<CS00)
 #define TIMER0_CLK_DIV_1              (1<<CS00)
 #define TIMER0_CLK_DIV_8              (2<<CS00)
@@ -72,9 +73,10 @@
 /* TODO */
 
 /**
- * GLOBAL VARIBALES
+ * TIMER CONFIGURATION
  */
 /* 10 us resolution timer: OCRA=19,  CLKDIV=8*/
+#if F_CPU == 16000000UL
 #if TIMER0_TICK_RESOLUTION_US == 10
 # define TIMER0_OCRA_VAL    (19)
 # define TIMER0_CLK_DIV_VAL (8)
@@ -105,28 +107,38 @@
 # define TIMER0_CLK_DIV_VAL (64)
 # define TIMER0_CLK_DIV (TIMER0_CLK_DIV_64)
 #else
-# error "No correct TIMER0TIMER0_TICK_RESOLUTION_US is defined."
+# error "No correct TIMER0_TICK_RESOLUTION_US is defined."
 #endif //TIMER0TIMER0_TICK_RESOLUTION_US
+#else
+# error "F_CPU not supported"
+#endif //F_CPU
 
 #define TIMER0_US_PER_TICK (TIMER0_CLK_DIV_VAL*(TIMER0_OCRA_VAL+1UL)/(F_CPU/1000000UL))
-#define TIMER0_MS_PER_TICK ((TIMER0_US_PER_TICK)*1000)
 
-extern volatile uint32_t timer0_us_since_start;
-extern volatile uint32_t timer0_ms_since_start;
-extern volatile uint8_t timer0_ms_flag;
-extern volatile uint8_t timer0_adc_flag;
+/*
+ * GLOBAL VARIABLES
+ */
+extern volatile uint32_t timer0_us;
+extern volatile uint32_t timer0_ms;
 
-/**
- * FUNCTION PROTOTYPES
+/*
+ * FUNCTION DECLARATION
  */
 void timer0_init(void);
 void timer0_start(void);
 void timer0_stop(void);
 
-uint8_t timer0_get_cnt(void);
-
 void timer0_set_ocra(uint8_t ocr_val);
 void timer0_set_ocrb(uint8_t ocr_val);
 void timer0_wait_ms_blocking(uint32_t wait_ms);
+
+#define timer0_get_cnt() (TCNT0)
+#define timer0_set_ocra(ocr_val) (OCR0A = ocr_val)
+#define timer0_set_ocrb(ocr_val) (OCR0B = ocr_val)
+
+#define get_us() (timer0_us)
+#define get_ms() (timer0_ms)
+
+void timer0_test(void);
 
 #endif //TIMER_H

@@ -61,7 +61,7 @@ void ADC_start_conversion(uint8_t adc_chan)
   PORTD |= LED_ADC;
 #if UART_DEBUG_LEVEL >= UART_DEBUG_LEVEL_NOTICE
   UART_puts("\n\r");
-  UART_putd_32(timer0_us_since_start);
+  UART_putd_32(get_us());
   UART_puts(" ADC: START CONV. CH = ");
   UART_putd(adc_chan);
 #endif
@@ -79,7 +79,7 @@ ADC_t ADC_single_shot_timestamp(uint8_t adc_chan)
   PORTD |= LED_ADC;
   ADC_t adc_val;
   adc_val.val = ADC_single_shot(adc_chan);
-  adc_val.timestamp = timer0_us_since_start;
+  adc_val.timestamp = get_us();
   return adc_val;
 }
 
@@ -106,7 +106,7 @@ ISR(ADC_vect)
   adc_val = ADC_CONVERSION_REG;
 #if UART_DEBUG_LEVEL >= UART_DEBUG_LEVEL_NOTICE
   UART_puts("\n\r");
-  UART_putd_32(timer0_us_since_start);
+  UART_putd_32(get_us());
   UART_puts(" ADC: CONV FINISHED. val = ");
   UART_putd(adc_val);
 #endif

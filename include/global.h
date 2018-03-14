@@ -10,7 +10,7 @@
 /* Set multiple bits while preserving other bits of the register */
 #define SET_8BIT_REG(REG,MASK,VAL) (REG = (REG & ~(MASK)) | VAL)
 
-#define TIMER0_TICK_RESOLUTION_US (100)
+#define TIMER0_TICK_RESOLUTION_US (1000)
 #define MAIN_LOOP_TIME_US         (10000)
 #define ADC_LOOP_TIME_US          (10000)
 

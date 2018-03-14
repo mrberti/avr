@@ -34,6 +34,7 @@ int main(void)
 UART_initialized\n\r\
 \n\r");
 
+	timer0_test();
 	uart_buffered_test();
 	buffer_test2();
 	buffer_test1();
@@ -72,7 +73,7 @@ void main_loop1()
 			ADC_start_conversion(adc_chan);
 
 			/* Send out all gathered ADC values */
-			UART_putd_32(timer0_us_since_start);
+			UART_putd_32(get_us());
 			UART_putc('\t');
 			for(uint8_t i = 0; i<ADCs; i++)
 			{
@@ -123,7 +124,7 @@ void main_loop2()
 			PORTD &= ~(1<<PD2);
 		}
 		PORTD |= (1<<PD2);
-		us_start = timer0_us_since_start;
+		us_start = get_us();
 
 		if(EVF_IS_SET(EVF_START_ADC))
 		{
@@ -164,7 +165,7 @@ void main_loop2()
 		}
 
 		/* Measure task times */
-		us_turnaround = timer0_us_since_start - us_start;
+		us_turnaround = get_us() - us_start;
 		us_delta = us_start - us_n1;
 		us_n1 = us_start;
 		//UART_putd_32(us_turnaround);
@@ -264,7 +265,7 @@ void buffer_test2()
 
 		if(EVF_IS_SET(EVF_MAIN_LOOP_WAIT_FINISHED))
 		{
-			test.timestamp = timer0_us_since_start;
+			test.timestamp = get_us();
 			test.val = ADC_single_shot(0);
 			buffer_write(&adct,&test);
 			CLEAR_EVF(EVF_MAIN_LOOP_WAIT_FINISHED);
@@ -312,7 +313,7 @@ void uart_buffered_test()
 		if(EVF_IS_SET(EVF_MAIN_LOOP_WAIT_FINISHED))
 		{
 			uart_buffer_write_string(&uart_buffer_tx, "\n\r");
-			uart_buffer_write_long(&uart_buffer_tx, timer0_us_since_start);
+			uart_buffer_write_long(&uart_buffer_tx, get_us());
 			uart_buffer_write_string(&uart_buffer_tx, " ");
 			while(uart_buffer_rx.used > 0)
 			{
@@ -321,7 +322,7 @@ void uart_buffered_test()
 			}
 			uart_kickout();
 			while(uart_transmit_enabled());
-			uart_buffer_write_long(&uart_buffer_tx, timer0_us_since_start);
+			uart_buffer_write_long(&uart_buffer_tx, get_us());
 			CLEAR_EVF(EVF_MAIN_LOOP_WAIT_FINISHED);
 		}
 
