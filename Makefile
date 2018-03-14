@@ -47,6 +47,8 @@ CFLAGS_COMMON += -fpack-struct -fshort-enums
 CFLAGS_COMMON += -g$(DEBUG)
 # The next two options will prevent unused functions to be linked
 CFLAGS_COMMON += -fdata-sections -ffunction-sections
+CFLAGS_COMMON += -save-temps=obj
+#CFLAGS_COMMON += -fverbose-asm
 LDFLAGS = -Wl,--gc-sections
 
 # Define C only compiler flags
@@ -137,7 +139,7 @@ $(OBJDIR)/%.d: $(SRCDIR)/%.cpp
 #avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^|$@ |' -e 's| | $(OBJDIR)/|' > $@
 	@avr-gcc $(INCFLAGS) $(DEPFLAGS) $< | sed -e 's|^| $(OBJDIR)/|'> $@
 
-# lss: Create assembler listings for all objects
+# lss: Create disassembly for all objects
 $(OBJDIR)/%.lss: $(OBJDIR)/%.o
 	@echo "Creating listing file: $< => $@"
 	@avr-objdump $(LSSFLAGS) $< > $@
