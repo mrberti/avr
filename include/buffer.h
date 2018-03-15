@@ -68,4 +68,7 @@ read_type(long);
   BUFFER_DECLARE(buf_name,data_type,buf_size); \
   BUFFER_INIT(buf_name,data_type,buf_size)
 
+void buffer_test1(void);
+void buffer_test2(void);
+
 #endif

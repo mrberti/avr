@@ -1,4 +1,13 @@
 #include "buffer.h"
+#include "global.h"
+
+/* Includes for the main test */
+#include "timer.h"
+#include "adc.h"
+#include "uart.h"
+#include "events.h"
+#include <avr/interrupt.h>
+#include <util/delay.h>
 
 #if UART_DEBUG_LEVEL > UART_DEBUG_LEVEL_NONE
 # include "uart.h"
@@ -145,4 +154,132 @@ buffer_result_t buffer_read(buffer_t *buf, void *val)
     UART_putd(index_r);
 #endif
   return BUFFER_SUCCESS;
+}
+
+
+
+/* Test function for the buffer.
+   A local buffer is created and then continously written and read */
+void buffer_test1()
+{
+	timer0_init();
+	timer0_start();
+	ADC_init();
+	sei();
+
+#define BUF_LOCAL_SIZE	8
+
+	BUFFER_DECLARE_AND_INIT(buf_local,int,BUF_LOCAL_SIZE);
+
+	buf_local_type_t temp_write, temp_read;
+	//buffer_result_t buf_result;
+	temp_write = 0;
+	while(1)
+	{
+		temp_write += 1;
+
+		buffer_write(&buf_local,&temp_write);
+
+		UART_puts("\n\rDATA: ");
+		for(int i = 0; i < BUF_LOCAL_SIZE; i++)
+		{
+			UART_puts(" ");
+
+			if(buf_local.index_w == i)
+				UART_puts("w");
+			if(buf_local.index_r == i)
+				UART_puts("r");
+			UART_putd(buf_local_data[i]);
+		}
+
+		if(buf_local.used > buf_local.index_max)
+		{
+			//UART_puts("\n\rDumping data: \n\r");
+			while(buf_local.used > 0)
+			{
+				while(buffer_read(&buf_local,&temp_read)!=BUFFER_SUCCESS);
+
+				_delay_ms(100);
+
+				UART_puts("\n\rDATA: ");
+				for(int i = 0; i < BUF_LOCAL_SIZE; i++)
+				{
+					UART_puts(" ");
+					if(buf_local.index_w == i)
+						UART_puts("w");
+					if(buf_local.index_r == i)
+						UART_puts("r");
+					UART_putd(buf_local_data[i]);
+				}
+			}
+		}
+		PORTD ^= LED_ALIVE;
+		_delay_ms(100);
+	}
+}
+
+/* Test function for the buffer.
+   The ADC interrupt will write to the buffer which is then read
+	 in the main loop. */
+void buffer_test2()
+{
+	timer0_init();
+	timer0_start();
+	ADC_init();
+	sei();
+
+	BUFFER_DECLARE_AND_INIT(adct,ADC_t,8);
+	ADC_t test;
+	ADC_val_t x;
+
+	//buffer_result_t buf_result;
+	int temp;
+	x = 0;
+
+	while(1)
+	{
+		x += 1;
+
+		if(EVF_IS_SET(EVF_START_ADC))
+		{
+			ADC_start_conversion(ADC_MUX_ADC0);
+			CLEAR_EVF(EVF_START_ADC);
+		}
+
+		if(EVF_IS_SET(EVF_MAIN_LOOP_WAIT_FINISHED))
+		{
+			test.timestamp = get_us();
+			test.val = ADC_single_shot(0);
+			buffer_write(&adct,&test);
+			CLEAR_EVF(EVF_MAIN_LOOP_WAIT_FINISHED);
+		}
+
+		if(adct.used > 4)
+		{
+			while(adct.used > 0)
+			{
+				buffer_read(&adct, &test);
+				UART_puts("\n\r");
+				UART_putd_32(test.timestamp);
+				UART_puts(": ");
+				UART_putd(test.val);
+				UART_puts(" buffer used = ");
+				UART_putd(adct.used);
+			}
+		}
+
+		if(buf_adc.used > 4)
+		{
+			while(buf_adc.used > 0)
+			{
+				buffer_read(&buf_adc, &temp);
+				UART_puts("\n\rADC = ");
+				UART_putd(temp);
+				UART_puts(" buffer used = ");
+				UART_putd(buf_adc.used);
+			}
+		}
+		PORTD ^= LED_ALIVE;
+		//_delay_ms(500);
+	}
 }

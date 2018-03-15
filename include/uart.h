@@ -129,4 +129,6 @@ void long2str_10(long, char*);
 #define uart_transmit_enabled() ((UCSR0B & (1<<UDRIE0)))
 #define uart_receive_enabled()  (UCSR0B & (1<<RXCIE0))
 
+void uart_buffered_test(void);
+
 #endif /*UART_H_*/

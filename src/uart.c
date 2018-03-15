@@ -6,6 +6,8 @@
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 
+#include "timer.h"
+
 uart_buffer_t uart_buffer_rx;
 uart_buffer_t uart_buffer_tx;
 
@@ -285,4 +287,35 @@ void long2str_10(long val, char* s)
 			s++;
 		}
 		*s = 0;
+}
+
+
+void uart_buffered_test()
+{
+	timer0_init();
+	timer0_start();
+	sei();
+	int temp = 0;
+	char c = 0;
+	while(1)
+	{
+		if(EVF_IS_SET(EVF_MAIN_LOOP_WAIT_FINISHED))
+		{
+			uart_buffer_write_string(&uart_buffer_tx, "\n\r");
+			uart_buffer_write_long(&uart_buffer_tx, get_us());
+			uart_buffer_write_string(&uart_buffer_tx, " ");
+			while(uart_buffer_rx.used > 0)
+			{
+				c = uart_buffer_read(&uart_buffer_rx);
+				uart_buffer_write(&uart_buffer_tx, c);
+			}
+			uart_kickout();
+			while(uart_transmit_enabled());
+			uart_buffer_write_long(&uart_buffer_tx, get_us());
+			CLEAR_EVF(EVF_MAIN_LOOP_WAIT_FINISHED);
+		}
+
+		temp += 1;
+		PORTB ^= (1<<PB5);
+	}
 }
