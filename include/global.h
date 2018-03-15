@@ -5,6 +5,8 @@
 #	define F_CPU 16000000UL
 #endif //F_CPU
 
+#define __AVR_ATmega328P__ 
+
 //#include <stdint.h>
 
 /* Set multiple bits while preserving other bits of the register */
