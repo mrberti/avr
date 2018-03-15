@@ -1,10 +1,11 @@
+#include "global.h"
+
 #include "uart.h"
 #include "events.h"
 
 #include <stdint.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <avr/pgmspace.h>
 
 #include "timer.h"
 
@@ -196,12 +197,10 @@ ISR(USART_UDRE_vect)
 	PORTD &= ~LED_UART_TX;
 }
 
-ISR(USART_TX_vect)
-{
-	PORTD ^= LED_RED;
-}
-
-const long divs[] PROGMEM = {1000000000, 100000000, 10000000, 1000000, 100000, 10000, 1000, 100, 10, 1};
+// ISR(USART_TX_vect)
+// {
+// 	PORTD ^= LED_RED;
+// }
 
 void int2str_10(int val, char* s)
 {
@@ -212,8 +211,8 @@ void int2str_10(int val, char* s)
 	conversion from binary to 10 base string much faster
 	- The '0' is always aligned left
 	*/
+	const long divs[] = {10000, 1000, 100, 10, 1};
 	const uint8_t divs_n = 5;
-	const uint8_t divs_n_start = 5;
 	int div;
 	uint8_t skip_leading_zeros = 1;
 
@@ -229,9 +228,9 @@ void int2str_10(int val, char* s)
 		*s = '-';
 		s++;
 	}
-	for(uint8_t i = divs_n_start; i < divs_n+divs_n_start; i++)
+	for(uint8_t i = 0; i < divs_n; i++)
 	{
-		div = pgm_read_word(&divs[i]);
+		div = divs[i];
 		if(div>val && skip_leading_zeros == 1)
 		{
 			//*s = ' ';
@@ -252,41 +251,43 @@ void int2str_10(int val, char* s)
 
 void long2str_10(long val, char* s)
 {
- 		const uint8_t divs_n = 10;
-		long div;
-		uint8_t skip_leading_zeros = 1;
+	const long divs[] = {1000000000, 100000000, 10000000, 1000000, 100000, 10000, 1000, 100, 10, 1};
 
-		if(val == 0)
+	const uint8_t divs_n = 10;
+	long div;
+	uint8_t skip_leading_zeros = 1;
+
+	if(val == 0)
+	{
+		*s = '0';
+		*(s+1) = 0;
+		return;
+	}
+	if(val < 0)
+	{
+		val = -val;
+		*s = '-';
+		s++;
+	}
+	for(uint8_t i = 0; i < divs_n; i++)
+	{
+		div = divs[i];
+		if(div>val && skip_leading_zeros == 1)
 		{
-			*s = '0';
-			*(s+1) = 0;
-			return;
+			//*s = ' ';
+			//s++;
+			continue;
 		}
-		if(val < 0)
+		skip_leading_zeros = 0;
+		*s = '0';
+		while(val>=div)
 		{
-			val = -val;
-			*s = '-';
-			s++;
+			val -= div;
+			*s += 1;
 		}
-		for(uint8_t i = 0; i < divs_n; i++)
-		{
-			div = pgm_read_dword(&divs[i]);
-			if(div>val && skip_leading_zeros == 1)
-			{
-				//*s = ' ';
-				//s++;
-				continue;
-			}
-			skip_leading_zeros = 0;
-			*s = '0';
-			while(val>=div)
-			{
-				val -= div;
-				*s += 1;
-			}
-			s++;
-		}
-		*s = 0;
+		s++;
+	}
+	*s = 0;
 }
 
 
