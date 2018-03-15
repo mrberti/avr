@@ -86,8 +86,8 @@ ISR(TIMER0_COMPA_vect)
   timer0_us += TIMER0_US_PER_TICK;
 
   static uint16_t us_1ms = 0;
-
-  if((us_1ms += TIMER0_US_PER_TICK) >= 1000)
+  us_1ms += TIMER0_US_PER_TICK;
+  if(us_1ms >= 1000)
   {
     SET_EVF(EVF_TIMER0_1MS_PASSED);
     timer0_ms += 1;
@@ -109,7 +109,6 @@ ISR(TIMER0_COMPA_vect)
     SET_EVF(EVF_START_ADC);
     us_adc = 0;
   }
-
 }
 
 // ISR(TIMER0_COMPB_vect)
